@@ -1,0 +1,34 @@
+# ============================================================
+# Root .gitignore — QueueSistemAdmisi Monorepo
+# ============================================================
+
+# --- Frontend (fe-queue-admisi) ---
+fe-queue-admisi/.next/
+fe-queue-admisi/out/
+fe-queue-admisi/build/
+fe-queue-admisi/node_modules/
+fe-queue-admisi/.pnp
+fe-queue-admisi/.pnp.*
+fe-queue-admisi/next-env.d.ts
+fe-queue-admisi/*.tsbuildinfo
+
+# --- Backend (BackEnd / Laravel) ---
+BackEnd/vendor/
+BackEnd/.env
+BackEnd/storage/logs/*.log
+BackEnd/storage/framework/cache/data/
+BackEnd/storage/framework/sessions/
+BackEnd/storage/framework/views/
+BackEnd/bootstrap/cache/*.php
+
+# --- OS & Editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/settings.json
+*.pem
+
+# --- Logs & Debug ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
