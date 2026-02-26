@@ -1,0 +1,82 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
+
+class AuthenticatedSessionController extends Controller
+{
+    /**
+     * Display the login view.
+     */
+    public function create(): View
+    {
+        return view('auth.login');
+    }
+
+    /**
+     * Handle an incoming authentication request.
+     */
+    public function store(LoginRequest $request): RedirectResponse|JsonResponse
+    {
+        $request->authenticate();
+
+        $request->session()->regenerate();
+
+        if ($request->wantsJson()) {
+            $user = $request->user();
+
+            // Peta role DB → label dengan spasi
+            $roleMap = [
+                'AdminDev' => 'Admin Dev',
+                'AdminLoket1' => 'Admin Loket 1',
+                'AdminLoket2' => 'Admin Loket 2',
+                'AdminLoket3' => 'Admin Loket 3',
+                'AdminLoket4' => 'Admin Loket 4',
+                // Jika sudah pakai format spasi, langsung dikembalikan
+                'Admin Dev' => 'Admin Dev',
+                'Admin Loket 1' => 'Admin Loket 1',
+                'Admin Loket 2' => 'Admin Loket 2',
+                'Admin Loket 3' => 'Admin Loket 3',
+                'Admin Loket 4' => 'Admin Loket 4',
+            ];
+            $normalizedRole = $roleMap[$user->role] ?? $user->role;
+
+            return response()->json([
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $normalizedRole,
+                ],
+                'role' => $normalizedRole,
+            ]);
+        }
+
+        if ($request->user()->role === 'AdminDev') {
+            return redirect()->intended(route('admin.users.index'));
+        }
+
+        return redirect()->intended('/');
+    }
+
+    /**
+     * Destroy an authenticated session.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+
+        $request->session()->regenerateToken();
+
+        return redirect('/');
+    }
+}
