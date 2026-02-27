@@ -27,7 +27,7 @@ export default function QueuePage() {
   const [callsLoading, setCallsLoading] = useState({});
   const [isLoadingData, setIsLoadingData] = useState(true);
   // 🚀 WAJIB ADA BARIS INI BRO! Ini 'Rumah' buat referensi tab display lo
-  const displayWindow = useRef(null);
+  //const displayWindow = useRef(null);
 
   const [isError, setIsError] = useState(false);
 
@@ -153,9 +153,9 @@ export default function QueuePage() {
   };
   const handleRecall = async (id) => {
     // Gunakan .current di sini bro!
-    if (!displayWindow.current || displayWindow.current.closed) {
-      displayWindow.current = window.open("/display", "UNJ_Queue_Display");
-    }
+    //if (!displayWindow.current || displayWindow.current.closed) {
+      //displayWindow.current = window.open("/display", "UNJ_Queue_Display");
+    //}
     // ... sisa kodingan lo ...
     // Jika tab sudah ada, DIEMIN AJA. Biar Pusher yang kirim suaranya lewat "jalur udara".
 
