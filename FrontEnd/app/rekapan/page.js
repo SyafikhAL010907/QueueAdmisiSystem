@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import Swal from "sweetalert2";
 import {
   BarChart,
   Bar,
@@ -67,13 +68,31 @@ export default function RekapanPage() {
   }, []);
 
   const handleDeleteRecord = async (id) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus data ini?")) return;
+    const result = await Swal.fire({
+      title: "Hapus Data?",
+      text: "Data yang dihapus tidak bisa dikembalikan!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Ya, Hapus!",
+      cancelButtonText: "Batal",
+      customClass: {
+        popup: "rounded-3xl shadow-2xl border border-rose-100",
+        confirmButton: "px-6 py-2.5 rounded-xl font-bold shadow-md shadow-rose-500/30 transition-all",
+        cancelButton: "px-6 py-2.5 rounded-xl font-bold transition-all",
+      },
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       const res = await fetch(`${API_URL}/api/queues/${id}`, {
         method: "DELETE",
         headers: { Accept: "application/json" },
       });
       if (!res.ok) throw new Error("Gagal menghapus data");
+
       // Refresh data
       const resRefresh = await fetch(`${API_URL}/api/queues`, {
         headers: { Accept: "application/json" },
@@ -81,26 +100,62 @@ export default function RekapanPage() {
       const allData = await resRefresh.json();
       const filtered = allData.filter(q => q.status === "completed" || q.status === "canceled");
       setQueues(filtered);
+
+      Swal.fire({
+        title: "Terhapus!",
+        text: "Data antrian telah dihapus.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+      });
     } catch (err) {
-      alert(err.message);
+      Swal.fire("Gagal", err.message, "error");
     }
   };
 
   const handleGlobalDelete = async () => {
-    // Confirm first
-    if (!confirm("Peringatan: Anda akan menghapus SELURUH data antrian! Data tidak dapat dikembalikan. Lanjutkan?")) return;
+    const result = await Swal.fire({
+      title: "HAPUS SELURUH DATA?",
+      html: "Peringatan: Semua data antrian (Selesai & Batal) akan <b>DIHAPUS PERMANEN</b> dari database!<br/><br/>Ketik <b>HAPUS</b> di bawah ini untuk konfirmasi:",
+      icon: "error",
+      background: "#fff5f5",
+      input: "text",
+      inputPlaceholder: "Ketik HAPUS untuk konfirmasi",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "YA, BERSIHKAN SEMUA!",
+      cancelButtonText: "Jangan, Batalkan",
+      customClass: {
+        popup: "rounded-3xl shadow-2xl border-2 border-rose-200",
+        title: "text-rose-600 font-black tracking-tight",
+        htmlContainer: "text-slate-600 font-medium",
+        confirmButton: "px-6 py-3 rounded-xl font-black shadow-lg shadow-rose-500/40 hover:bg-rose-600 transition-all",
+        cancelButton: "px-6 py-3 rounded-xl font-bold bg-slate-500 hover:bg-slate-600 transition-all text-white",
+        input: "text-center font-black tracking-widest uppercase border-rose-200 focus:border-rose-500 focus:ring-rose-500 rounded-xl"
+      },
+      preConfirm: (inputValue) => {
+        if (inputValue !== "HAPUS") {
+          Swal.showValidationMessage("Anda harus mengetik HAPUS dengan benar.");
+          return false;
+        }
+        return true;
+      }
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       // Periksa role dari localStorage karena kita perlu AdminDev
       const savedUser = localStorage.getItem("user");
       if (!savedUser) {
-        alert("Unauthorized! Anda harus login sebagai Admin Dev.");
+        Swal.fire("Unauthorized!", "Anda harus login sebagai Admin Dev.", "error");
         return;
       }
 
       const parsedUser = JSON.parse(savedUser);
       if (parsedUser.role !== "Admin Dev" && parsedUser.role !== "AdminDev") {
-        alert("Akses Ditolak! Hanya Admin Dev yang dapat menghapus seluruh data.");
+        Swal.fire("Akses Ditolak!", "Hanya Admin Dev yang dapat menghapus seluruh data.", "error");
         return;
       }
 
@@ -119,9 +174,19 @@ export default function RekapanPage() {
 
       // ⚠️ WARNING requirement: Set frontend state 'queues' to [] directly
       setQueues([]);
-      alert("Semua data antrian berhasil dihapus!");
+
+      Swal.fire({
+        title: "Bersih Total!",
+        text: "Semua data antrian berhasil dihapus!",
+        icon: "success",
+        confirmButtonColor: "#10b981",
+        customClass: {
+          popup: "rounded-3xl border border-emerald-100",
+          confirmButton: "rounded-xl font-bold"
+        }
+      });
     } catch (err) {
-      alert(err.message);
+      Swal.fire("Gagal", err.message, "error");
     }
   };
 
@@ -267,7 +332,7 @@ export default function RekapanPage() {
             </h2>
 
             <div className="h-[300px] md:h-[400px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" fontSize={11} fontWeight="bold" stroke="#94a3b8" />

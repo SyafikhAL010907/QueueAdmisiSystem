@@ -91,13 +91,16 @@ export function AudioProvider({ children }) {
 
         setCallVisible(true);
         if (callFadeTimer.current) clearTimeout(callFadeTimer.current);
-        callFadeTimer.current = setTimeout(() => {
-            setCallVisible(false);
-        }, 5000);
 
         playAnnounce(qNum, cName, lNum, eLang, () => {
-            setIsSpeaking(false);
-            setCallQueue(prev => prev.slice(1));
+            setCallVisible(false); // Trigger fade out animation
+
+            // Wait 800ms (duration of callFadeOut) before unmounting and proceeding
+            callFadeTimer.current = setTimeout(() => {
+                setCurrentCall(null); // Hard-reset state to completely unmount banner
+                setIsSpeaking(false);
+                setCallQueue(prev => prev.slice(1));
+            }, 800);
         });
     }, [callQueue, isSpeaking, audioUnlocked, playAnnounce]);
 

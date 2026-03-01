@@ -222,38 +222,43 @@ export default function DisplayPage() {
           {/* ===== RIGHT : VIDEO & CALLING BANNER (8 cols on desktop) ===== */}
           <section className="w-full lg:col-span-8 flex flex-col gap-6 mb-8 lg:mb-0 lg:h-full">
             {/* ── CALLING BANNER ── */}
-            <div className="h-auto md:h-24 lg:h-auto shrink-0 transition-all duration-500">
-              {hasMounted && currentCall && (
-                <div
-                  className="h-auto min-h-[120px] py-4 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-3xl shadow-2xl shadow-sky-200 border border-sky-400 flex items-center justify-center px-8 gap-6 overflow-hidden relative"
-                  style={{
-                    animation: callVisible
-                      ? 'callFadeIn 0.4s ease forwards'
-                      : 'callFadeOut 0.8s ease forwards',
-                  }}
-                >
-                  <div className="bg-white/20 backdrop-blur-md p-3 rounded-2xl animate-pulse shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                    </svg>
-                  </div>
+            <div
+              className="grid transition-all duration-1500 ease-in-out"
+              style={{ gridTemplateRows: hasMounted && currentCall ? '1fr' : '0fr' }}
+            >
+              <div className="overflow-hidden">
+                <div className="h-auto md:h-24 lg:h-auto shrink-0 transition-all duration-500">
+                  <div
+                    className="h-auto min-h-[120px] py-4 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-3xl shadow-2xl shadow-sky-200 border border-sky-400 flex items-center justify-center px-8 gap-6 overflow-hidden relative"
+                    style={{
+                      animation: callVisible
+                        ? 'callFadeIn 0.4s ease forwards'
+                        : 'callFadeOut 0.8s ease forwards',
+                    }}
+                  >
+                    <div className="bg-white/20 backdrop-blur-md p-3 rounded-2xl animate-pulse shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                      </svg>
+                    </div>
 
-                  <div className="flex flex-col items-center justify-center text-center min-w-0">
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-sky-100 opacity-80 mb-1 leading-none">Sedang Dipanggil</span>
-                    <h2 className="text-2xl lg:text-3xl font-black leading-tight whitespace-normal break-words">
-                      {currentCall.name}
-                      <span className="text-sky-200 font-light mx-2">—</span>
-                      <span className="bg-white text-sky-600 px-3 py-1 rounded-xl text-lg lg:text-xl inline-block mt-2 md:mt-0">LOKET {currentCall.loket}</span>
-                    </h2>
+                    <div className="flex flex-col items-center justify-center text-center min-w-0">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-sky-100 opacity-80 mb-1 leading-none">Sedang Dipanggil</span>
+                      <h2 className="text-2xl lg:text-3xl font-black leading-tight whitespace-normal break-words">
+                        {currentCall?.name || '...'}
+                        <span className="text-sky-200 font-light mx-2">—</span>
+                        <span className="bg-white text-sky-600 px-3 py-1 rounded-xl text-lg lg:text-xl inline-block mt-2 md:mt-0">LOKET {currentCall?.loket || '-'}</span>
+                      </h2>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* ── VIDEO AREA ── */}
-            <div className="flex-1 w-full h-full rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl relative bg-black min-h-[300px]">
+            <div className="flex-1 w-full h-full rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl relative bg-black min-h-[300px] transition-all duration-1500 ease-in-out transform-gpu">
               <video
                 src="/vidio/profile.mp4"
                 autoPlay

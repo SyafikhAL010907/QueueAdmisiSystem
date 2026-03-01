@@ -49,7 +49,7 @@ export const playVoice = (queueNumber, customerName, loket, lang = 'id', onEnd =
 
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.lang = langCode;
-    utterance.rate = 1.3;
+    utterance.rate = 1.0;
     utterance.pitch = 1.0;
 
     // Pasang callback onEnd ke event utterance.onend
