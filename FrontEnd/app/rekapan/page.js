@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-
+import { Trash2 } from "lucide-react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -65,6 +65,65 @@ export default function RekapanPage() {
     }
     fetchRekapan();
   }, []);
+
+  const handleDeleteRecord = async (id) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus data ini?")) return;
+    try {
+      const res = await fetch(`${API_URL}/api/queues/${id}`, {
+        method: "DELETE",
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) throw new Error("Gagal menghapus data");
+      // Refresh data
+      const resRefresh = await fetch(`${API_URL}/api/queues`, {
+        headers: { Accept: "application/json" },
+      });
+      const allData = await resRefresh.json();
+      const filtered = allData.filter(q => q.status === "completed" || q.status === "canceled");
+      setQueues(filtered);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleGlobalDelete = async () => {
+    // Confirm first
+    if (!confirm("Peringatan: Anda akan menghapus SELURUH data antrian! Data tidak dapat dikembalikan. Lanjutkan?")) return;
+
+    try {
+      // Periksa role dari localStorage karena kita perlu AdminDev
+      const savedUser = localStorage.getItem("user");
+      if (!savedUser) {
+        alert("Unauthorized! Anda harus login sebagai Admin Dev.");
+        return;
+      }
+
+      const parsedUser = JSON.parse(savedUser);
+      if (parsedUser.role !== "Admin Dev" && parsedUser.role !== "AdminDev") {
+        alert("Akses Ditolak! Hanya Admin Dev yang dapat menghapus seluruh data.");
+        return;
+      }
+
+      // Check if the frontend sends token automatically; if not, we must rely on Sanctum cookies.
+      // fetch cross-port usually requires credentials: "include" for sanctum, so we'll add it.
+      const res = await fetch(`${API_URL}/api/queues`, {
+        method: "DELETE",
+        headers: { Accept: "application/json" },
+        credentials: "include" // Needed for auth middleware to identify user
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "Gagal menghapus semua data");
+      }
+
+      // ⚠️ WARNING requirement: Set frontend state 'queues' to [] directly
+      setQueues([]);
+      alert("Semua data antrian berhasil dihapus!");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   /* ================= EXPORT ================= */
 
@@ -142,123 +201,163 @@ export default function RekapanPage() {
           </div>
         )}
         {/* HEADER */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <h1 className="text-xl md:text-3xl font-bold text-gray-800">
             Rekapan & Analitik Antrian
           </h1>
 
           <button
             onClick={exportExcel}
-            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow"
+            className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-green-600/20 font-semibold transition-all active:scale-95"
           >
             Export Excel
           </button>
         </div>
 
         {/* FILTER */}
-        <div className="bg-white p-6 rounded-xl shadow flex items-center gap-6">
-          <label className="font-semibold">Filter Statistik:</label>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-sky-50 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+          <label className="font-bold text-slate-700">Filter Statistik:</label>
 
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="border px-4 py-2 rounded-lg"
+            className="w-full md:w-auto border border-sky-100 px-4 py-2 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 transition-all font-medium"
           >
             <option value="day">Per Hari</option>
             <option value="month">Per Bulan</option>
             <option value="year">Per Tahun</option>
           </select>
 
-          <div className="ml-auto text-gray-600">
-            Total Data: <span className="font-bold">{queues.length}</span>
+          <div className="md:ml-auto text-slate-500 font-medium">
+            Total Data: <span className="font-black text-sky-600">{queues.length}</span>
           </div>
         </div>
 
         {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-3 gap-6">
-          <div className="bg-blue-600 text-white p-6 rounded-xl shadow">
-            <h2 className="text-sm opacity-80">Total Selesai</h2>
-            <p className="text-3xl font-bold">{queues.length}</p>
-          </div>
+        <div className="p-1">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-6 rounded-2xl shadow-xl shadow-blue-600/20">
+              <h2 className="text-xs font-black uppercase tracking-widest opacity-80 mb-2">Total Selesai</h2>
+              <p className="text-4xl font-black tracking-tight">{queues.length}</p>
+            </div>
 
-          <div className="bg-yellow-400 text-black p-6 rounded-xl shadow">
-            <h2 className="text-sm opacity-80">Periode Aktif</h2>
-            <p className="text-3xl font-bold">{filter.toUpperCase()}</p>
-          </div>
+            <div className="bg-gradient-to-br from-amber-400 to-orange-500 text-white p-6 rounded-2xl shadow-xl shadow-amber-500/20">
+              <h2 className="text-xs font-black uppercase tracking-widest opacity-80 mb-2">Periode Aktif</h2>
+              <p className="text-4xl font-black tracking-tight">{filter.toUpperCase()}</p>
+            </div>
 
-          <div className="bg-purple-600 text-white p-6 rounded-xl shadow">
-            <h2 className="text-sm opacity-80">Rata-rata / Periode</h2>
-            <p className="text-3xl font-bold">
-              {chartData.length
-                ? Math.round(queues.length / chartData.length)
-                : 0}
-            </p>
+            <div className="bg-gradient-to-br from-purple-600 to-fuchsia-700 text-white p-6 rounded-2xl shadow-xl shadow-purple-600/20">
+              <h2 className="text-xs font-black uppercase tracking-widest opacity-80 mb-2">Rata-rata / Periode</h2>
+              <p className="text-4xl font-black tracking-tight">
+                {chartData.length
+                  ? Math.round(queues.length / chartData.length)
+                  : 0}
+              </p>
+            </div>
           </div>
         </div>
 
         {/* CHART SECTION */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* BAR CHART */}
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h2 className="font-bold mb-4">Grafik Batang</h2>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-sky-50">
+            <h2 className="font-black text-slate-700 mb-6 uppercase tracking-widest text-sm flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+              Grafik Batang
+            </h2>
 
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="total" fill="#1e3a8a" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[300px] md:h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" fontSize={11} fontWeight="bold" stroke="#94a3b8" />
+                  <YAxis fontSize={11} fontWeight="bold" stroke="#94a3b8" />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                  />
+                  <Bar dataKey="total" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* LINE CHART */}
-          <div className="bg-white p-6 rounded-xl shadow">
-            <h2 className="font-bold mb-4">Grafik Tren</h2>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-sky-50">
+            <h2 className="font-black text-slate-700 mb-6 uppercase tracking-widest text-sm flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-purple-600 rounded-full"></span>
+              Grafik Tren
+            </h2>
 
-            <Line data={lineChartData} />
+            <div className="h-[300px] md:h-[400px] w-full">
+              <Line data={lineChartData} options={{ maintainAspectRatio: false }} />
+            </div>
           </div>
         </div>
 
-        {/* TABLE */}
-        <div className="bg-white p-6 rounded-xl shadow overflow-auto">
-          <h2 className="font-bold mb-4">Detail Data Selesai</h2>
+        {/* TABLE HEADER & GLOBAL DELETE BUTTON */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-sky-50">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-black text-slate-700 uppercase tracking-widest text-sm">
+              Detail Data Selesai
+            </h2>
+            <button
+              onClick={handleGlobalDelete}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold shadow-md flex items-center gap-2 transition-all"
+            >
+              <Trash2 size={18} />
+              Hapus Semua Data
+            </button>
+          </div>
 
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b bg-gray-100">
-                <th className="p-3">No</th>
-                <th className="p-3">Nama</th>
-                <th className="p-3">Loket</th>
-                <th className="p-3">Tanggal Selesai</th>
-              </tr>
-            </thead>
+          <div className="overflow-x-auto shadow-inner rounded-xl border border-sky-50">
+            <table className="w-full text-left min-w-[700px]">
+              <thead>
+                <tr className="bg-slate-50 border-b border-sky-100">
+                  <th className="p-4 text-xs font-black uppercase tracking-widest text-slate-500">No</th>
+                  <th className="p-4 text-xs font-black uppercase tracking-widest text-slate-500">Nama</th>
+                  <th className="p-4 text-xs font-black uppercase tracking-widest text-slate-500">Loket</th>
+                  <th className="p-4 text-xs font-black uppercase tracking-widest text-slate-500">Tanggal Selesai</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {currentData && currentData.length > 0 ? (
-                currentData.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="border-b hover:bg-gray-50 transition"
-                  >
-                    <td className="p-3 font-medium">{item.queue_number}</td>
-                    <td className="p-3">{item.name}</td>
-                    <td className="p-3">{item.loket}</td>
-                    <td className="p-3 text-gray-500">
-                      {new Date(item.updated_at).toLocaleString()}
+              <tbody className="divide-y divide-sky-50">
+                {currentData && currentData.length > 0 ? (
+                  currentData.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-sky-50/50 transition-colors"
+                    >
+                      <td className="p-4 font-bold text-sky-700">{item.queue_number}</td>
+                      <td className="p-4 font-medium text-slate-700">{item.name}</td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-lg font-bold text-xs ${item.loket ? 'bg-sky-100 text-sky-600' : 'bg-slate-100 text-slate-500'}`}>
+                          {item.loket ? `Loket ${item.loket}` : 'Loket ?'}
+                        </span>
+                      </td>
+                      <td className="p-4 flex items-center justify-between">
+                        <span className="text-sm text-slate-400 font-medium">
+                          {new Date(item.updated_at).toLocaleString()}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteRecord(item.id)}
+                          className="p-1 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Hapus Data"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="text-center py-20 text-slate-300 font-bold italic">
+                      Tidak ada data rekapan
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="text-center py-4 text-gray-400">
-                    Tidak ada data rekapan
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
           {/* PAGINATION */}
           <div className="flex justify-center items-center gap-2 mt-6">
             {/* Previous */}

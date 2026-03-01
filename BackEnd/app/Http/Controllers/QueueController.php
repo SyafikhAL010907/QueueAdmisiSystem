@@ -103,8 +103,7 @@ class QueueController extends Controller
     {
         $queue = Queue::findOrFail($id);
         $queue->update([
-            'status' => 'completed',
-            'loket' => null
+            'status' => 'completed'
         ]);
 
         return response()->json($queue);
@@ -115,8 +114,7 @@ class QueueController extends Controller
     {
         $queue = Queue::findOrFail($id);
         $queue->update([
-            'status' => 'canceled',
-            'loket' => null
+            'status' => 'canceled'
         ]);
 
         return response()->json($queue);
@@ -141,5 +139,22 @@ class QueueController extends Controller
             ->first(['id', 'queue_number', 'name', 'status', 'loket', 'updated_at']);
 
         return response()->json($queue);
+    }
+
+    // Delete single
+    public function destroy($id)
+    {
+        $queue = Queue::findOrFail($id);
+        $queue->delete();
+
+        return response()->json(['message' => 'Data berhasil dihapus']);
+    }
+
+    // Delete all (Global Delete)
+    public function destroyAll()
+    {
+        Queue::truncate();
+
+        return response()->json(['message' => 'Semua data antrian berhasil dihapus']);
     }
 }

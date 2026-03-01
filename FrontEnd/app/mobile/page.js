@@ -8,6 +8,7 @@ export default function MobileQueue() {
     const [name, setName] = useState("");
     const [queueData, setQueueData] = useState(null); // { id, queue_number, status, loket }
     const [isLoading, setIsLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasMounted, setHasMounted] = useState(false);
 
     // Status ref to track changes and prevent re-triggering haptic/voice
@@ -21,8 +22,12 @@ export default function MobileQueue() {
     /* ══════════ ACTIONS ══════════════════════════════════════════════════ */
 
     const handleTakeQueue = async () => {
-        if (!name) return alert("Masukkan nama Anda terlebih dahulu, bro!");
+        if (isSubmitting || !name.trim()) {
+            if (!name.trim()) alert("Masukkan nama Anda terlebih dahulu, bro!");
+            return;
+        }
 
+        setIsSubmitting(true);
         setIsLoading(true);
         try {
             // 🔗 Endpoint sama dengan logic lama
@@ -48,6 +53,7 @@ export default function MobileQueue() {
             alert("Gagal ambil antrian. Cek koneksi server lo, bro!");
         } finally {
             setIsLoading(false);
+            setIsSubmitting(false);
         }
     };
 
@@ -120,7 +126,7 @@ export default function MobileQueue() {
     if (!hasMounted) return null; // Cegah kedip/error saat loading pertama
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-6 font-sans">
+        <div className="min-h-screen bg-slate-50 flex flex-col justify-between px-10 py-12 font-sans">
 
             {/* HEADER SECTION */}
             <header className="text-center pt-10">
@@ -130,30 +136,36 @@ export default function MobileQueue() {
             </header>
 
             {/* INPUT CARD SECTION */}
-            <main className="flex-1 flex items-center justify-center">
-                <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl shadow-sky-900/10 p-10 border border-white">
+            <main className="flex-1 flex items-center justify-center relative z-10 px-4">
+                <div className="w-full max-w-md bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_20px_50px_rgba(8,112,184,0.12)] p-8 md:p-10 border border-white/50">
                     {!queueData ? (
                         /* STAGE 1: Input Name */
                         <div className="space-y-6">
+                            <div className="text-center space-y-2 mb-4">
+                                <h2 className="text-xl font-bold text-sky-900 tracking-tight">Selamat Datang</h2>
+                                <p className="text-sm text-slate-500 leading-relaxed italic px-2">
+                                    "Selamat datang tamu yang terhormat, silakan ambil nomor antrian dengan memasukkan nama Anda."
+                                </p>
+                            </div>
+
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-sky-800 ml-1">Nama Pengunjung</label>
+                                <label className="text-xs font-black uppercase tracking-widest text-sky-800 ml-1">Nama Pengunjung</label>
                                 <input
                                     type="text"
-                                    placeholder="Ketik nama lo di sini..."
+                                    placeholder="Silakan masukkan Nama Anda di sini..."
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     disabled={isLoading}
-                                    className='w-full px-6 py-5 rounded-2xl bg-slate-100 border-2 border-transparent focus:border-sky-500 focus:bg-white outline-none transition-all text-lg font-semibold text-slate-800'
+                                    className='w-full px-4 md:px-5 py-5 rounded-2xl bg-slate-50 border-2 border-sky-50 focus:border-sky-500 focus:bg-white outline-none transition-all text-lg font-semibold text-slate-800 placeholder:text-[10px] sm:placeholder:text-sm md:placeholder:text-base'
                                 />
                             </div>
 
                             <button
                                 onClick={handleTakeQueue}
-                                disabled={isLoading}
-                                className={`w-full py-5 rounded-2xl font-black text-xl shadow-xl transition-all active:scale-95 ${isLoading ? "bg-slate-400 cursor-not-allowed text-white" : "bg-sky-600 hover:bg-sky-700 text-white shadow-sky-600/40"
-                                    }`}
+                                disabled={isSubmitting}
+                                className={`w-full py-5 rounded-2xl font-black text-xl shadow-xl transition-all bg-sky-600 text-white shadow-sky-600/40 ${isSubmitting ? "opacity-50 cursor-not-allowed pointer-events-none" : "hover:scale-105 active:scale-95 hover:bg-sky-700"}`}
                             >
-                                {isLoading ? "Sedang Memproses..." : "Ambil Antrian"}
+                                {isSubmitting ? "Memproses..." : "Ambil Antrian"}
                             </button>
                         </div>
                     ) : (
@@ -224,9 +236,9 @@ export default function MobileQueue() {
             </main>
 
             {/* FOOTER INFO */}
-            <footer className="pb-6">
+            <footer className="pb-6 relative z-10">
                 <p className='text-xs text-slate-400 text-center leading-relaxed px-10'>
-                    Harap tunggu di Lounge. Nama lo bakal dipanggil otomatis sama robot di TV Display.
+                    Harap menunggu di Lounge. Nama Anda akan dipanggil secara otomatis melalui pengeras suara.
                 </p>
             </footer>
         </div>

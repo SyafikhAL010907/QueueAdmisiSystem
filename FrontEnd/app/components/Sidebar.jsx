@@ -13,6 +13,8 @@ import {
   ChevronDown,
   LogOut,
   UserCircle2,
+  Menu,
+  X,
 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
@@ -21,6 +23,7 @@ export default function DashboardLayout({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [role, setRole] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -93,26 +96,60 @@ export default function DashboardLayout({ children }) {
   const menuItems = allMenuItems.filter((item) => item.show);
 
   return (
-    <div className="flex h-screen bg-transparent">
+    <div className="flex h-screen bg-slate-50/50 overflow-hidden">
+      {/* MOBILE HEADER - Only visible on small screens */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-sky-100 flex items-center justify-between px-6 z-40">
+        <h1 className="text-lg font-bold text-sky-900 bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
+          Queue System
+        </h1>
+        <button
+          onClick={() => setIsMobileOpen(true)}
+          className="p-2 text-sky-600 hover:bg-sky-50 rounded-xl transition-colors"
+        >
+          <Menu size={24} />
+        </button>
+      </div>
+
+      {/* OVERLAY for mobile */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 lg:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
       <aside
-        className={`${collapsed ? "w-20" : "w-64"
-          } bg-white/80 backdrop-blur-md border-r border-sky-100 text-slate-600 flex flex-col transition-all duration-300 z-50 fixed md:relative h-full ${collapsed ? "-translate-x-20 md:translate-x-0" : "translate-x-0"
-          }`}
+        className={`fixed inset-y-0 left-0 z-[60] flex flex-col bg-white/95 backdrop-blur-xl border-r border-sky-100 text-slate-600 transition-all duration-300 ease-in-out lg:relative
+          ${isMobileOpen ? "translate-x-0 w-full" : "-translate-x-full lg:translate-x-0"}
+          ${collapsed ? "lg:w-20" : "lg:w-64"}
+        `}
       >
         {/* HEADER */}
-        <div className="flex items-center justify-between p-5 border-b border-sky-50">
-          {!collapsed && (
+        <div className="flex items-center justify-between p-5 border-b border-sky-50 h-16 shrink-0">
+          {(!collapsed || isMobileOpen) && (
             <h1 className="text-lg font-bold truncate text-sky-900 bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
               Queue System
             </h1>
           )}
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-1.5 hover:bg-sky-50 text-sky-600 rounded-xl transition-colors"
-          >
-            {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Toggle button - desktop only */}
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="hidden lg:flex p-2 hover:bg-sky-50 text-sky-600 rounded-xl transition-all duration-300"
+            >
+              <div className={`transition-transform duration-500 ${collapsed ? "rotate-180" : ""}`}>
+                <ChevronLeft size={20} />
+              </div>
+            </button>
+            {/* Close button - mobile only */}
+            <button
+              onClick={() => setIsMobileOpen(false)}
+              className="lg:hidden p-1.5 hover:bg-rose-50 text-rose-500 rounded-xl transition-colors"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* MAIN MENU — flex-1 agar dorong logout ke bawah */}
@@ -124,13 +161,15 @@ export default function DashboardLayout({ children }) {
               <Link
                 key={item.path}
                 href={item.path}
-                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 ${isActive
+                onClick={() => setIsMobileOpen(false)}
+                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-300 ${isActive
                   ? "bg-sky-100 text-sky-700 font-semibold shadow-sm shadow-sky-100"
                   : "hover:bg-sky-50 hover:text-sky-600 hover:pl-4 text-slate-500"
-                  }`}
+                  } ${collapsed && !isMobileOpen ? "justify-center px-2 hover:pl-2" : ""}`}
+                title={collapsed ? item.name : ""}
               >
-                <Icon size={20} className={isActive ? "text-sky-600" : "text-slate-400"} />
-                {!collapsed && <span>{item.name}</span>}
+                <Icon size={22} className={`shrink-0 transition-colors ${isActive ? "text-sky-600" : "text-slate-400"}`} />
+                {(!collapsed || isMobileOpen) && <span className="truncate transition-opacity duration-300">{item.name}</span>}
               </Link>
             );
           })}
@@ -138,16 +177,25 @@ export default function DashboardLayout({ children }) {
           {/* ⚙️ PENGATURAN — Dropdown Toggle */}
           <div>
             <button
-              onClick={() => !collapsed && setSettingsOpen((prev) => !prev)}
-              className={`flex items-center gap-3 px-3 py-3 rounded-xl w-full transition-all duration-200 ${settingsOpen
+              onClick={() => {
+                if (!collapsed || isMobileOpen) {
+                  setSettingsOpen((prev) => !prev);
+                } else {
+                  // If collapsed desktop, we could either expand or just act like a link to profile
+                  // The user said "tanpa harus menekan tanda >" - maybe they want it to work as-is
+                  setSettingsOpen((prev) => !prev);
+                }
+              }}
+              className={`flex items-center gap-3 px-3 py-3 rounded-xl w-full transition-all duration-300 ${settingsOpen
                 ? "bg-sky-50 text-sky-700"
                 : "hover:bg-sky-50 hover:text-sky-600 hover:pl-4 text-slate-500"
-                }`}
+                } ${collapsed && !isMobileOpen ? "justify-center px-2 hover:pl-2" : ""}`}
+              title={collapsed ? "Pengaturan" : ""}
             >
-              <Settings size={20} className={`shrink-0 ${settingsOpen ? "text-sky-600" : "text-slate-400"}`} />
-              {!collapsed && (
+              <Settings size={22} className={`shrink-0 transition-colors ${settingsOpen ? "text-sky-600" : "text-slate-400"}`} />
+              {(!collapsed || isMobileOpen) && (
                 <>
-                  <span className="flex-1 text-left text-sm">Pengaturan</span>
+                  <span className="flex-1 text-left text-sm truncate">Pengaturan</span>
                   <ChevronDown
                     size={16}
                     className={`text-sky-300 transition-transform duration-300 ${settingsOpen ? "rotate-180" : "rotate-0"
@@ -159,11 +207,12 @@ export default function DashboardLayout({ children }) {
 
             {/* Dropdown Panel — slide down */}
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${settingsOpen && !collapsed ? "max-h-56 opacity-100" : "max-h-0 opacity-0"
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${(settingsOpen && !collapsed) || (settingsOpen && isMobileOpen) ? "max-h-56 opacity-100" : "max-h-0 opacity-0"
                 }`}
             >
               {/* Profile Card — klik ke /profile */}
               <Link href="/profile"
+                onClick={() => setIsMobileOpen(false)}
                 className="mx-2 mt-1 rounded-2xl bg-sky-50/50 border border-sky-100 p-4 space-y-3 block hover:bg-sky-100/50 transition-colors cursor-pointer"
               >
                 {/* Avatar + Name */}
@@ -195,28 +244,28 @@ export default function DashboardLayout({ children }) {
         <div className="p-3 border-t border-sky-50 shrink-0">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all duration-200 group"
+            className={`flex items-center gap-3 w-full px-3 py-3 rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all duration-300 group ${collapsed && !isMobileOpen ? "justify-center px-2" : ""}`}
+            title={collapsed ? "Keluar" : ""}
           >
             <LogOut
-              size={20}
+              size={22}
               className="shrink-0 group-hover:rotate-12 transition-transform duration-200"
             />
-            {!collapsed && <span className="text-sm font-medium">Keluar</span>}
+            {(!collapsed || isMobileOpen) && <span className="text-sm font-medium truncate">Keluar</span>}
           </button>
-          {!collapsed && (
-            <p className="text-center text-[10px] text-slate-300 mt-2 font-medium tracking-wider">
+          {(!collapsed || isMobileOpen) && (
+            <p className="text-center text-[10px] text-slate-300 mt-2 font-medium tracking-wider truncate">
               © 2026 UNJ QUEUE SYSTEM
             </p>
           )}
         </div>
       </aside>
 
-      {/* MOBILE TRIGGER — Only visible when collapsed or on small screens if we wanted a separate button */}
-      {/* For now, the aside handles itself with fixed position on mobile */}
-
       {/* CONTENT */}
-      <div className={`flex-1 overflow-auto p-4 md:p-8 transition-all duration-300 ${collapsed ? "ml-0" : "ml-0 md:ml-0"}`}>
-        {children}
+      <div className={`flex-1 flex flex-col min-w-0 overflow-hidden pt-16 lg:pt-0`}>
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+          {children}
+        </main>
       </div>
     </div>
   );

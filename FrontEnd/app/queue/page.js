@@ -26,8 +26,6 @@ export default function QueuePage() {
   const [recallsLoading, setRecallsLoading] = useState({});
   const [callsLoading, setCallsLoading] = useState({});
   const [isLoadingData, setIsLoadingData] = useState(true);
-  // 🚀 WAJIB ADA BARIS INI BRO! Ini 'Rumah' buat referensi tab display lo
-  //const displayWindow = useRef(null);
 
   const [isError, setIsError] = useState(false);
 
@@ -152,13 +150,6 @@ export default function QueuePage() {
     }
   };
   const handleRecall = async (id) => {
-    // Gunakan .current di sini bro!
-    //if (!displayWindow.current || displayWindow.current.closed) {
-      //displayWindow.current = window.open("/display", "UNJ_Queue_Display");
-    //}
-    // ... sisa kodingan lo ...
-    // Jika tab sudah ada, DIEMIN AJA. Biar Pusher yang kirim suaranya lewat "jalur udara".
-
     setRecallsLoading(prev => ({ ...prev, [id]: true }));
     try {
       const res = await fetch(`${BASE_URL}/queues/${id}/recall`, {
@@ -232,12 +223,6 @@ export default function QueuePage() {
    * 2. Refreshes local queue list
    */
   const callQueue = async (id, name, loket) => {
-    // 🚀 FIX: Jangan asal panggil window.open
-    if (!displayWindow.current || displayWindow.current.closed) {
-      displayWindow.current = window.open("/display", "UNJ_Queue_Display");
-    }
-    // Setelah tab terbuka sekali, logic di bawah ini bakal kirim sinyal tanpa mindahin tab
-
     console.log("🚀 Memanggil API...", { id, name, loket });
     // ... sisa kodingan fetch lo ...
     console.log("Remote: Perintah suara dikirim ke Display...");
