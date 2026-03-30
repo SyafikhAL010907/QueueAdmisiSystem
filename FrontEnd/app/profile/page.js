@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "../components/Sidebar";
+import { getApiUrl } from "@/src/utils/apiConfig";
 import { UserCircle2, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = getApiUrl();
 
 // ─── Toast component ──────────────────────────────────────────────────────────
 function Toast({ message, type, onClose }) {
@@ -91,7 +92,7 @@ export default function ProfilePage() {
         }
         setEmailLoading(true);
         try {
-            const res = await fetch(`${API_URL}/api/user/profile`, {
+            const res = await fetch(`${API_URL}/user/profile`, {
                 method: "PUT",
                 credentials: "include",
                 headers: { Accept: "application/json", "Content-Type": "application/json" },
@@ -122,7 +123,7 @@ export default function ProfilePage() {
         setPwErrors({});
         setPwLoading(true);
         try {
-            const res = await fetch(`${API_URL}/api/user/profile`, {
+            const res = await fetch(`${API_URL}/user/profile`, {
                 method: "PUT",
                 credentials: "include",
                 headers: { Accept: "application/json", "Content-Type": "application/json" },

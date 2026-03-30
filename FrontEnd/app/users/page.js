@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Sidebar from "../components/Sidebar";
+import { getApiUrl } from "@/src/utils/apiConfig";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = getApiUrl();
 
 // ─── Reusable Modal Wrapper ───────────────────────────────────────────────────
 function Modal({ title, onClose, children }) {
@@ -64,7 +65,7 @@ export default function UsersPage() {
         setLoading(true);
         setError("");
         try {
-            const res = await fetch(`${API_URL}/api/users`, {
+            const res = await fetch(`${API_URL}/users`, {
                 credentials: "include",
                 headers: { Accept: "application/json" },
             });
@@ -80,7 +81,7 @@ export default function UsersPage() {
     useEffect(() => {
         fetchUsers();
         // Fetch available roles from DB ENUM
-        fetch(`${API_URL}/api/roles`, { headers: { Accept: "application/json" } })
+        fetch(`${API_URL}/roles`, { headers: { Accept: "application/json" } })
             .then((r) => r.json())
             .then((roles) => {
                 if (Array.isArray(roles) && roles.length > 0) {
@@ -105,7 +106,7 @@ export default function UsersPage() {
         }
         setSubmitting(true);
         try {
-            const res = await fetch(`${API_URL}/api/users`, {
+            const res = await fetch(`${API_URL}/users`, {
                 method: "POST",
                 credentials: "include",
                 headers: { Accept: "application/json", "Content-Type": "application/json" },
@@ -140,7 +141,7 @@ export default function UsersPage() {
         try {
             const body = { name: editForm.name, email: editForm.email };
             if (editForm.password) body.password = editForm.password;
-            const res = await fetch(`${API_URL}/api/users/${editTarget.id}`, {
+            const res = await fetch(`${API_URL}/users/${editTarget.id}`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: { Accept: "application/json", "Content-Type": "application/json" },
@@ -162,7 +163,7 @@ export default function UsersPage() {
         if (!confirm(`Hapus admin "${name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
         setDeleting(id);
         try {
-            const res = await fetch(`${API_URL}/api/users/${id}`, {
+            const res = await fetch(`${API_URL}/users/${id}`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: { Accept: "application/json" },

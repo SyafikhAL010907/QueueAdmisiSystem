@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAudioContext } from "../components/AudioProvider";
+import { getApiUrl } from "@/src/utils/apiConfig";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = getApiUrl();
 
 // ───────────────────────────────────────────────────────────────────────────
 export default function DisplayPage() {
@@ -56,7 +57,7 @@ export default function DisplayPage() {
   useEffect(() => {
     async function fetchQueues() {
       try {
-        const res = await fetch(`${API_URL}/api/queues`, {
+        const res = await fetch(`${API_URL}/queues`, {
           headers: { Accept: "application/json" },
           credentials: "include",
         });

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 import { playVoice, getActiveLang } from "../lib/voiceEngine";
+import { getBaseUrl, getReverbConfig } from "@/src/utils/apiConfig";
 
 const AudioContext = createContext();
 
@@ -112,10 +113,13 @@ export function AudioProvider({ children }) {
         const echo = new Echo({
             broadcaster: 'reverb',
             key: 'azrdrsjgfa1g49yuqvml',
-            wsHost: window.location.hostname,
-            wsPort: 8080,
-            forceTLS: false,
-            disableStats: true,
+            ...getReverbConfig(),
+            authEndpoint: `${getBaseUrl()}/api/broadcasting/auth`,
+            auth: {
+                headers: {
+                    Accept: 'application/json'
+                }
+            }
         });
 
         echo.connector.pusher.connection.bind('connected', () => setIsEchoOnline(true));

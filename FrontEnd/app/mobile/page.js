@@ -1,8 +1,9 @@
 "use client"; // 🚀 Penting agar tidak Hydration Error
 import { useState, useEffect, useRef } from "react";
 import { playVoice, getActiveLang } from "../lib/voiceEngine";
+import { getApiUrl } from "@/src/utils/apiConfig";
 
-const API_URL = "http://localhost:8000";
+const API_URL = getApiUrl();
 
 export default function MobileQueue() {
     const [name, setName] = useState("");
@@ -31,7 +32,7 @@ export default function MobileQueue() {
         setIsLoading(true);
         try {
             // 🔗 Endpoint sama dengan logic lama
-            const response = await fetch(`${API_URL}/api/queues`, {
+            const response = await fetch(`${API_URL}/queues`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -65,7 +66,7 @@ export default function MobileQueue() {
 
         const pollStatus = async () => {
             try {
-                const res = await fetch(`${API_URL}/api/queues`, {
+                const res = await fetch(`${API_URL}/queues`, {
                     headers: { Accept: "application/json" },
                 });
                 if (!res.ok) return;

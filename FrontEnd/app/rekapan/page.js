@@ -26,6 +26,7 @@ import {
 import { Line } from "react-chartjs-2";
 
 import DashboardLayout from "../components/Sidebar";
+import { getApiUrl } from "@/src/utils/apiConfig";
 
 ChartJS.register(
   CategoryScale,
@@ -36,7 +37,7 @@ ChartJS.register(
   Legend,
 );
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_URL = getApiUrl();
 
 export default function RekapanPage() {
   const [queues, setQueues] = useState([]);
@@ -48,7 +49,7 @@ export default function RekapanPage() {
   useEffect(() => {
     async function fetchRekapan() {
       try {
-        const res = await fetch(`${API_URL}/api/queues`, {
+        const res = await fetch(`${API_URL}/queues`, {
           headers: { Accept: "application/json" },
         });
         if (!res.ok) throw new Error("Gagal fetch data");
@@ -87,7 +88,7 @@ export default function RekapanPage() {
     if (!result.isConfirmed) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/queues/${id}`, {
+      const res = await fetch(`${API_URL}/queues/${id}`, {
         method: "DELETE",
         headers: { Accept: "application/json" },
       });
@@ -161,7 +162,7 @@ export default function RekapanPage() {
 
       // Check if the frontend sends token automatically; if not, we must rely on Sanctum cookies.
       // fetch cross-port usually requires credentials: "include" for sanctum, so we'll add it.
-      const res = await fetch(`${API_URL}/api/queues`, {
+      const res = await fetch(`${API_URL}/queues`, {
         method: "DELETE",
         headers: { Accept: "application/json" },
         credentials: "include" // Needed for auth middleware to identify user

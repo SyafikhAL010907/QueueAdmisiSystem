@@ -1,6 +1,6 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL}/api`
-  : "http://localhost:8000/api";
+import { getApiUrl } from "@/src/utils/apiConfig";
+
+const BASE_URL = getApiUrl();
 
 export const getQueues = async () => {
   const res = await fetch(`${BASE_URL}/queues`);

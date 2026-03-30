@@ -9,8 +9,9 @@ import QueueForm from "../components/QueueForm";
 import QueueTable from "../components/QueueTable";
 import DashboardLayout from "../components/Sidebar";
 import { SUPPORTED_LANGS, getActiveLang } from "../lib/voiceEngine";
+import { getApiUrl } from "@/src/utils/apiConfig";
 
-const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api";
+const BASE_URL = getApiUrl();
 
 export default function QueuePage() {
   const [queues, setQueues] = useState([]);

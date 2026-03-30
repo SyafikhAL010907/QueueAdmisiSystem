@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getBaseUrl } from "@/src/utils/apiConfig";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -52,7 +53,7 @@ export default function DashboardLayout({ children }) {
 
   const handleLogout = async () => {
     try {
-      const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const BASE_URL = getBaseUrl();
       await fetch(`${BASE_URL}/api/logout`, {
         method: "POST",
         credentials: "include",

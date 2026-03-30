@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getBaseUrl } from "@/src/utils/apiConfig";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const BASE_URL = getBaseUrl();
 
       // Ambil CSRF cookie Laravel Sanctum
       await fetch(`${BASE_URL}/sanctum/csrf-cookie`, {
