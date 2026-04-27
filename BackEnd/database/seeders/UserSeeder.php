@@ -16,18 +16,17 @@ class UserSeeder extends Seeder
         // Akun AdminDev
         User::create([
             'name' => 'Super Admin Dev',
-            'email' => 'AdminDev@gmail.com',
-            'role' => 'admin',
-            'password' => Hash::make('Admindev1'),
+            'email' => 'admindev@example.com',
+            'role' => 'AdminDev',
+            'password' => Hash::make('password123'), // password: password123
         ]);
 
-        // Akun Admin Loket
+        // Akun Admin
         User::create([
-            'name' => 'Admin Loket 1',
-            'email' => 'AdminLoket1@gmail.com',
+            'name' => 'Admin Operasional',
+            'email' => 'admin@example.com',
             'role' => 'admin',
-            'password' => Hash::make('12345678'),
+            'password' => Hash::make('password123'), // password: password123
         ]);
-
     }
 }

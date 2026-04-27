@@ -26,11 +26,17 @@ class SqlSeeder extends Seeder
         $sql = File::get($path);
         
         // Execute the SQL queries
-        // Note: Using DB::unprepared for raw SQL import
         try {
             DB::unprepared($sql);
-            $this->command->info("Impor data berhasil!");
+            
+            // PAKSA UPDATE PASSWORD ADMIN BIAR PASTI BISA LOGIN
+            DB::table('users')->where('email', 'AdminDev@gmail.com')->update([
+                'password' => \Illuminate\Support\Facades\Hash::make('Admindev1')
+            ]);
+
+            $this->command->info("Impor data berhasil & Password admin di-reset!");
         } catch (\Exception $e) {
+
             $this->command->error("Gagal impor data: " . $e->getMessage());
         }
     }
