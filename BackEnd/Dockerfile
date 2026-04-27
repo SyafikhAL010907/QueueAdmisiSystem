@@ -44,7 +44,8 @@ COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 EXPOSE 8000
 
 # Start fresh migration, seed data from SQL, and then supervisor
-CMD sed -i "s/listen 8000;/listen ${PORT:-8000};/g" /var/www/nginx.conf && php artisan migrate:fresh --seed --force && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+CMD sed -i "s/listen 8000;/listen ${PORT:-8000};/g" /var/www/nginx.conf && php -d memory_limit=512M artisan migrate:fresh --seed --force && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+
 
 
 

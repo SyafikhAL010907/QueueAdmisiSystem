@@ -25,11 +25,12 @@ return [
             'secret' => 'fgtx1u9w0h4q6vmnrkzl',
             'app_id' => '123456',
             'options' => [
-                'host' => '0.0.0.0', // PAKAI INI BIAR TEMBUS DI RENDER
+                'host' => '127.0.0.1', // BALIK KE LOKAL LAGI
                 'port' => 8080,
                 'scheme' => 'http',
                 'useTLS' => false,
             ],
+
 
 
             'client_options' => [
