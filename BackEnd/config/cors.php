@@ -24,6 +24,7 @@ return [
         'http://127.0.0.1:3000',
         'http://192.168.50.91:3000',
         'http://192.168.50.238:3000',
+        'https://queue-admisi-system.vercel.app',
     ],
 
     'allowed_origins_patterns' => [],
