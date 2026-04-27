@@ -152,8 +152,10 @@ export default function UsersPage() {
         setError("");
         try {
             const res = await fetch(`${API_URL}/users`, {
-                credentials: "include",
-                headers: { Accept: "application/json" },
+                headers: { 
+                    Accept: "application/json",
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                },
             });
             if (!res.ok) throw new Error("Gagal memuat data. Pastikan sudah login.");
             setUsers(await res.json());
@@ -168,8 +170,10 @@ export default function UsersPage() {
     const fetchNextLoket = useCallback(async () => {
         try {
             const res = await fetch(`${API_URL}/loket-count`, {
-                headers: { Accept: "application/json" },
-                credentials: "include",
+                headers: { 
+                    Accept: "application/json",
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                },
             });
             const data = await res.json();
             const next = (data?.count ?? 0) + 1;
@@ -199,8 +203,11 @@ export default function UsersPage() {
         try {
             const res = await fetch(`${API_URL}/users`, {
                 method: "POST",
-                credentials: "include",
-                headers: { Accept: "application/json", "Content-Type": "application/json" },
+                headers: { 
+                    Accept: "application/json", 
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                },
                 body: JSON.stringify({ name: addForm.name, email: addForm.email, password: addForm.password, role: nextLoketRole }),
             });
             const data = await res.json();
@@ -236,8 +243,11 @@ export default function UsersPage() {
             if (editForm.password) body.password = editForm.password;
             const res = await fetch(`${API_URL}/users/${editTarget.id}`, {
                 method: "PATCH",
-                credentials: "include",
-                headers: { Accept: "application/json", "Content-Type": "application/json" },
+                headers: { 
+                    Accept: "application/json", 
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                },
                 body: JSON.stringify(body),
             });
             const data = await res.json();
@@ -284,8 +294,10 @@ export default function UsersPage() {
         // Validasi 2: Cek antrian aktif di loket ini
         try {
             const res = await fetch(`${API_URL}/queues`, {
-                headers: { Accept: "application/json" },
-                credentials: "include",
+                headers: { 
+                    Accept: "application/json",
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                },
             });
             const allQueues = await res.json();
             const activeQueues = Array.isArray(allQueues)
@@ -320,8 +332,10 @@ export default function UsersPage() {
         try {
             const res = await fetch(`${API_URL}/users/${deleteConfirm.id}`, {
                 method: "DELETE",
-                credentials: "include",
-                headers: { Accept: "application/json" },
+                headers: { 
+                    Accept: "application/json",
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                },
             });
             if (!res.ok) throw new Error("Gagal menghapus admin.");
             setDeleteConfirm(null);

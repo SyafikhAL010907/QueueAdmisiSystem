@@ -51,6 +51,8 @@ export default function LoginPage() {
       // Simpan ke localStorage agar Sidebar bisa baca role & user info
       localStorage.setItem('role', data.role);
       localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token); // SIMPAN TIKET DI SINI
+
 
       // Redirect sesuai role
       if (data.role === "Admin Dev") router.push("/users");

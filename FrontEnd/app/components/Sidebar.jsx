@@ -56,9 +56,13 @@ export default function DashboardLayout({ children }) {
       const BASE_URL = getBaseUrl();
       await fetch(`${BASE_URL}/api/logout`, {
         method: "POST",
-        credentials: "include",
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        headers: { 
+            Accept: "application/json", 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
       });
+
     } catch { }
     localStorage.clear();
     sessionStorage.clear();

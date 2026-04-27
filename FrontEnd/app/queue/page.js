@@ -58,8 +58,10 @@ export default function QueuePage() {
   // Fetch jumlah loket aktif dari API (dinamis)
   useEffect(() => {
     fetch(`${BASE_URL}/loket-count`, {
-      headers: { Accept: "application/json" },
-      credentials: "include",
+      headers: { 
+        Accept: "application/json",
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
     })
       .then((r) => r.json())
       .then((data) => { if (data?.count) setLoketCount(data.count); })
@@ -70,8 +72,10 @@ export default function QueuePage() {
   const fetchQueues = async () => {
     try {
       const res = await fetch(`${BASE_URL}/queues`, {
-        headers: { Accept: "application/json" },
-        credentials: "include",
+        headers: { 
+            Accept: "application/json",
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
       });
       if (!res.ok) throw new Error("Fetch failed");
       const data = await res.json();
@@ -103,8 +107,8 @@ export default function QueuePage() {
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
-        credentials: "include",
         body: JSON.stringify({ name }),
       });
 
@@ -145,8 +149,10 @@ export default function QueuePage() {
     try {
       const res = await fetch(`${BASE_URL}/queues/${id}/complete`, {
         method: "POST",
-        headers: { Accept: "application/json" },
-        credentials: "include",
+        headers: { 
+            Accept: "application/json",
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
       });
       if (res.ok) {
         Swal.fire({ icon: "success", title: "Antrian selesai", toast: true,
@@ -172,10 +178,10 @@ export default function QueuePage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Accept": "application/json",
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({ lang: localStorage.getItem("queue_lang") || activeLang }),
-        credentials: "include", // Pastiin ini tetep ada buat nembus CORS
       });
       // ... sisa kodingan lo ...
       console.log("DEBUG: handleRecall response status:", res.status);
@@ -213,8 +219,10 @@ export default function QueuePage() {
     try {
       const res = await fetch(`${BASE_URL}/queues/${id}/cancel`, {
         method: "POST",
-        headers: { Accept: "application/json" },
-        credentials: "include",
+        headers: { 
+            Accept: "application/json",
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
       });
       if (res.ok) {
         Swal.fire({ icon: "success", title: "Antrian dibatalkan", toast: true,
@@ -261,6 +269,7 @@ export default function QueuePage() {
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         },
         // Loket mode: kirim role string, biarkan backend ekstrak nomornya
         // Admin Dev mode: kirim integer loket langsung
@@ -269,7 +278,6 @@ export default function QueuePage() {
             ? { role: userRole, lang: localStorage.getItem("queue_lang") || activeLang }
             : { loket: loket, lang: localStorage.getItem("queue_lang") || activeLang }
         ),
-        credentials: "include",
       });
 
       console.log("DEBUG: callQueue response status:", res.status);

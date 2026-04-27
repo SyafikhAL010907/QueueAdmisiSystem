@@ -50,8 +50,10 @@ export default function RekapanPage() {
     async function fetchRekapan() {
       try {
         const res = await fetch(`${API_URL}/queues`, {
-          headers: { Accept: "application/json" },
-          credentials: "include",
+          headers: { 
+            Accept: "application/json",
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
         });
         if (!res.ok) throw new Error("Gagal fetch data");
         const allData = await res.json();
@@ -95,8 +97,10 @@ export default function RekapanPage() {
     try {
       const res = await fetch(`${API_URL}/queues/${id}`, {
         method: "DELETE",
-        headers: { Accept: "application/json" },
-        credentials: "include",
+        headers: { 
+            Accept: "application/json",
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
       });
       if (!res.ok) throw new Error("Gagal menghapus data");
 
@@ -163,8 +167,10 @@ export default function RekapanPage() {
       // fetch cross-port usually requires credentials: "include" for sanctum, so we'll add it.
       const res = await fetch(`${API_URL}/queues`, {
         method: "DELETE",
-        headers: { Accept: "application/json" },
-        credentials: "include" // Needed for auth middleware to identify user
+        headers: { 
+            Accept: "application/json",
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
       });
 
       if (!res.ok) {

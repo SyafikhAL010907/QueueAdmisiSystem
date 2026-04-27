@@ -60,6 +60,9 @@ class AuthenticatedSessionController extends Controller
             // Jika ada di legacy map → konversi. Jika sudah format baru → langsung pakai.
             $normalizedRole = $legacyMap[$role] ?? $role;
 
+            // BIKIN TIKET (TOKEN) BARU
+            $token = $user->createToken('auth_token')->plainTextToken;
+
             return response()->json([
                 'user' => [
                     'id'    => $user->id,
@@ -68,7 +71,9 @@ class AuthenticatedSessionController extends Controller
                     'role'  => $normalizedRole,
                 ],
                 'role' => $normalizedRole,
+                'token' => $token, // KASIH TIKETNYA KE FRONTEND
             ]);
+
         }
 
         if ($request->user()->role === 'AdminDev') {
