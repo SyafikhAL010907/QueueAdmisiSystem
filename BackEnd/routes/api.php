@@ -50,7 +50,7 @@ Route::get('/roles', function () {
 });
 
 // --- Users & Profile API (protected) ---
-Route::middleware('auth')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     // Profile (semua role)
     Route::put('/user/profile', [\App\Http\Controllers\ProfileController::class, 'updateApi']);
 
@@ -135,4 +135,5 @@ Route::delete('/queues', function (Request $request) {
         return response()->json(['message' => 'Unauthorized. Hanya AdminDev yang diizinkan.'], 403);
     }
     return app(QueueController::class)->destroyAll();
-})->middleware('auth');
+})->middleware('auth:sanctum');
+
