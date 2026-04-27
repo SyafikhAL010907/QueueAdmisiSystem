@@ -219,11 +219,11 @@ export default function DisplayPage() {
                       </svg>
                     </div>
                     <div className="flex flex-col flex-1 items-center justify-center min-w-0 pr-6">
-                      <span className="text-[8px] font-black uppercase tracking-widest text-sky-100 opacity-80 leading-none mb-1 text-center">Dipanggil:</span>
-                      <h2 className="text-sm font-black leading-tight truncate text-center w-full">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-sky-50 leading-none mb-1 text-center">Dipanggil:</span>
+                      <h2 className="text-xl font-black leading-tight truncate text-center w-full">
                         {currentCall?.name || '...'}
                       </h2>
-                      <span className="text-[10px] font-bold text-sky-200 text-center">LOKET {currentCall?.loket || '-'}</span>
+                      <span className="text-sm font-black text-white text-center">LOKET {currentCall?.loket || '-'}</span>
                     </div>
                   </div>
                 </div>
