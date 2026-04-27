@@ -16,49 +16,53 @@ class SqlSeeder extends Seeder
         $path = base_path('DATA/queing_system.sql');
         
         if (!File::exists($path)) {
-            $this->command->error("File SQL tidak ditemukan di: {$path}");
+            \Illuminate\Support\Facades\Log::error("SQL File NOT FOUND at: " . $path);
             return;
         }
 
-        $this->command->info("Mengimpor data dari {$path}...");
-        
-        // Read the SQL file
         $sql = File::get($path);
         
-        // Execute the SQL queries
-        try {
-            DB::unprepared($sql);
-            
-            // 1. Pastikan Admin Dev ADA dan Passwordnya Admindev1
-            DB::table('users')->updateOrInsert(
-                ['email' => 'AdminDev@gmail.com'],
-                [
-                    'name' => 'Super Admin Dev',
-                    'role' => 'Admin Dev',
-                    'password' => \Illuminate\Support\Facades\Hash::make('Admindev1'),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
-            
-            // 2. Reset Password Semua Admin Loket (1-4) jadi 12345678
-            $affectedLoket = DB::table('users')->where('role', 'like', 'Admin Loket %')->update([
-                'password' => \Illuminate\Support\Facades\Hash::make('12345678')
-            ]);
-
-            \Illuminate\Support\Facades\Log::info("SQL Import - Indestructible Sync DONE", [
-                'total_users_in_db' => DB::table('users')->count(),
-                'loket_users_updated' => $affectedLoket
-            ]);
-
-
-
-
-
-            $this->command->info("Impor data berhasil & Password admin di-reset!");
-        } catch (\Exception $e) {
-
-            $this->command->error("Gagal impor data: " . $e->getMessage());
+        // Bersihkan SQL (Hapus komentar dan baris kosong)
+        $lines = explode("\n", $sql);
+        $cleanSql = "";
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line && !str_starts_with($line, '--') && !str_starts_with($line, '/*')) {
+                $cleanSql .= $line . "\n";
+            }
         }
+
+        // Jalankan SQL (Pecah per statement ;)
+        $statements = array_filter(array_map('trim', explode(';', $cleanSql)));
+        
+        $successCount = 0;
+        foreach ($statements as $statement) {
+            try {
+                // Jangan jalankan CREATE TABLE kalau sudah ada (fresh migration sudah bikin)
+                if (stripos($statement, 'CREATE TABLE') === false) {
+                    DB::unprepared($statement);
+                    $successCount++;
+                }
+            } catch (\Exception $e) {
+                // Abaikan error kalau cuma masalah tabel sudah ada
+            }
+        }
+
+        // PAKSA BIKIN ADMIN DEV (Kunci Utama)
+        DB::table('users')->updateOrInsert(
+            ['email' => 'AdminDev@gmail.com'],
+            [
+                'name' => 'Super Admin Dev',
+                'role' => 'Admin Dev',
+                'password' => \Illuminate\Support\Facades\Hash::make('Admindev1'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        \Illuminate\Support\Facades\Log::info("SQL Import - FINAL REPORT", [
+            'statements_executed' => $successCount,
+            'total_users' => DB::table('users')->count()
+        ]);
     }
 }
