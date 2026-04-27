@@ -13,7 +13,26 @@ export default function DisplayPage() {
   useEffect(() => { setHasMounted(true); }, []);
 
   // Global Audio Engine context
-  const { currentCall, callVisible } = useAudioContext();
+  const { currentCall, callVisible, isSpeaking, audioUnlocked } = useAudioContext();
+  const videoRef = useRef(null);
+
+  // 🔊 Unmute video setelah user klik (audio unlock)
+  useEffect(() => {
+    if (audioUnlocked && videoRef.current) {
+      videoRef.current.muted = false;
+      videoRef.current.volume = 1.0;
+    }
+  }, [audioUnlocked]);
+
+  // 🎚️ Audio Ducking: mute video saat TTS jalan, unmute saat selesai
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (isSpeaking) {
+      videoRef.current.muted = true; // Senyapkan video saat panggil antrian
+    } else if (audioUnlocked) {
+      videoRef.current.muted = false; // Kembalikan suara video setelah selesai
+    }
+  }, [isSpeaking, audioUnlocked]);
 
   // Sync global `currentCall` into local `queues` array to update the screen
   useEffect(() => {
@@ -270,6 +289,7 @@ export default function DisplayPage() {
             {/* ── VIDEO AREA ── */}
             <div className="flex-1 w-full h-full rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl relative bg-black min-h-[300px] transition-all duration-1500 ease-in-out transform-gpu flex items-center justify-center">
               <video
+                ref={videoRef}
                 src="https://res.cloudinary.com/dwhtnuo9d/video/upload/v1777289416/Lv_0_20260420131810_2_1_1_crmkxc.mp4"
                 autoPlay
                 loop

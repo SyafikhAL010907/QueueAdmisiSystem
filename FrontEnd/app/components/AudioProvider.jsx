@@ -166,7 +166,7 @@ export function AudioProvider({ children }) {
     }, [hasMounted]);
 
     return (
-        <AudioContext.Provider value={{ audioUnlocked, handleUnlockClick, currentCall, callVisible, isEchoOnline }}>
+        <AudioContext.Provider value={{ audioUnlocked, handleUnlockClick, currentCall, callVisible, isEchoOnline, isSpeaking }}>
             {hasMounted && isDisplayPage && !audioUnlocked && (
                 <div
                     onClick={handleUnlockClick}
