@@ -25,11 +25,12 @@ return [
             'secret' => 'fgtx1u9w0h4q6vmnrkzl',
             'app_id' => '123456',
             'options' => [
-                'host' => '127.0.0.1', // JALUR DALAM (CEPET)
+                'host' => '0.0.0.0', // PAKAI INI BIAR TEMBUS DI RENDER
                 'port' => 8080,
                 'scheme' => 'http',
                 'useTLS' => false,
             ],
+
 
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
