@@ -25,11 +25,12 @@ return [
             'secret' => 'fgtx1u9w0h4q6vmnrkzl',
             'app_id' => '123456',
             'options' => [
-                'host' => '127.0.0.1', // BALIK KE LOKAL LAGI
+                'host' => '0.0.0.0', // DENGERIN SEMUA
                 'port' => 8080,
                 'scheme' => 'http',
                 'useTLS' => false,
             ],
+
 
 
 

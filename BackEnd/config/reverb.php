@@ -29,13 +29,14 @@ return [
     'servers' => [
 
         'reverb' => [
-            'host' => '127.0.0.1', // PAKSA JALUR LOKAL
+            'host' => '0.0.0.0', // DENGERIN SEMUA JALUR
             'port' => 8080,
             'path' => '',
-            'hostname' => 'queueadmisisystem.onrender.com',
+            'hostname' => null, // BIARIN OTOMATIS
             'options' => [
                 'tls' => [],
             ],
+
 
             'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 10_000),
             'scaling' => [
