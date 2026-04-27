@@ -22,8 +22,9 @@ class QueueController extends Controller
             'name' => 'required'
         ]);
 
-        $lastQueue = Queue::latest()->first();
-        $number = $lastQueue ? $lastQueue->id + 1 : 1;
+        // Hitung antrian yang dibuat HARI INI → mulai dari A001 setiap hari
+        $todayCount = Queue::whereDate('created_at', today())->count();
+        $number = $todayCount + 1;
 
         $queue = Queue::create([
             'queue_number' => 'A' . str_pad($number, 3, '0', STR_PAD_LEFT),
@@ -33,6 +34,7 @@ class QueueController extends Controller
 
         return response()->json($queue);
     }
+
 
     // ✅ CALL — accepts integer loket OR role string like "Admin Loket 3"
     public function call(Request $request, $id)
@@ -168,11 +170,14 @@ class QueueController extends Controller
         return response()->json(['message' => 'Data berhasil dihapus']);
     }
 
-    // Delete all (Global Delete)
+    // Delete all completed/canceled (Global Delete dari Rekapan)
     public function destroyAll()
     {
-        Queue::truncate();
+        $deleted = Queue::whereIn('status', ['completed', 'canceled'])->delete();
 
-        return response()->json(['message' => 'Semua data antrian berhasil dihapus']);
+        return response()->json([
+            'message' => "Semua data rekapan berhasil dihapus ({$deleted} records)"
+        ]);
     }
+
 }

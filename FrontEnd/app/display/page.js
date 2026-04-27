@@ -270,7 +270,7 @@ export default function DisplayPage() {
             {/* ── VIDEO AREA ── */}
             <div className="flex-1 w-full h-full rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl relative bg-black min-h-[300px] transition-all duration-1500 ease-in-out transform-gpu flex items-center justify-center">
               <video
-                src="/vidio/profile.mp4"
+                src="https://res.cloudinary.com/dwhtnuo9d/video/upload/v1777289416/Lv_0_20260420131810_2_1_1_crmkxc.mp4"
                 autoPlay
                 loop
                 muted
@@ -296,7 +296,7 @@ export default function DisplayPage() {
               Sistem Admisi Digital Lounge Eksekutif <span className="mx-6 text-sky-400">•</span>
               Harap menunggu hingga nama Anda dipanggil <span className="mx-6 text-sky-400">•</span>
               Harap siapkan dokumen pendukung Anda <span className="mx-6 text-sky-400">•</span>
-              Terima kasih atas kesabaran Anda <span className="mx-6 text-sky-400">•••</span>
+              Terima kasih atas kesabaran Anda <span className="mx-6 text-sky-400">••</span>
             </span>
           ))}
         </div>

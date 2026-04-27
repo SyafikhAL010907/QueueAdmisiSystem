@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { getApiUrl } from "@/src/utils/apiConfig";
 
 const API_URL = getApiUrl();
+const STORAGE_KEY = "mobile_queue_data";
 
 export default function MobileQueue() {
     const [name, setName] = useState("");
@@ -10,13 +11,39 @@ export default function MobileQueue() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasMounted, setHasMounted] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(false);
 
     // Status ref to track changes and prevent re-triggering haptic/voice
     const lastStatusRef = useRef(null);
 
     // 🛡️ Guard agar tidak error saat refresh (Hydration Guard)
+    // + Load dari localStorage kalau di HP
     useEffect(() => {
         setHasMounted(true);
+
+        // Deteksi apakah ini desktop/laptop (layar >= 1024px)
+        const desktop = window.innerWidth >= 1024;
+        setIsDesktop(desktop);
+
+        // Kalau MOBILE → cek localStorage dulu
+        if (!desktop) {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    // Hanya restore kalau statusnya masih aktif (bukan selesai/batal)
+                    if (parsed && parsed.id && parsed.status !== "completed" && parsed.status !== "canceled") {
+                        setQueueData(parsed);
+                        console.log("📱 Restore tiket dari localStorage:", parsed);
+                    } else {
+                        // Tiket sudah selesai, hapus dari storage
+                        localStorage.removeItem(STORAGE_KEY);
+                    }
+                }
+            } catch (e) {
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        }
     }, []);
 
     /* ══════════ ACTIONS ══════════════════════════════════════════════════ */
@@ -43,6 +70,12 @@ export default function MobileQueue() {
             if (response.ok) {
                 const data = await response.json();
                 setQueueData(data);
+
+                // 📱 Simpan ke localStorage kalau mobile
+                if (!isDesktop) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                }
+
                 console.log("🚀 Tiket Berhasil Diambil:", data);
             } else {
                 const err = await response.json();
@@ -75,6 +108,12 @@ export default function MobileQueue() {
 
                 if (myQueue && myQueue.status !== queueData.status) {
                     setQueueData(myQueue);
+
+                    // 📱 Update localStorage kalau mobile
+                    if (!isDesktop) {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(myQueue));
+                    }
+
                     console.log("🔄 Status Update:", myQueue.status);
                 }
             } catch (err) {
@@ -84,7 +123,7 @@ export default function MobileQueue() {
 
         const interval = setInterval(pollStatus, 3000);
         return () => clearInterval(interval);
-    }, [queueData?.id, queueData?.status]);
+    }, [queueData?.id, queueData?.status, isDesktop]);
 
     /* ══════════ TRIGGERS (VOICE & HAPTIC) ════════════════════════════════ */
 
@@ -113,11 +152,17 @@ export default function MobileQueue() {
                 setQueueData(null);
                 setName("");
                 setIsLoading(false);
+
+                // 📱 Hapus dari localStorage kalau mobile
+                if (!isDesktop) {
+                    localStorage.removeItem(STORAGE_KEY);
+                }
             }, 4000);
         }
 
         lastStatusRef.current = queueData.status;
-    }, [queueData]);
+    }, [queueData, isDesktop]);
+
 
     /* ══════════ UI RENDERING ═════════════════════════════════════════════ */
 

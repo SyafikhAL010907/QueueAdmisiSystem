@@ -127,7 +127,10 @@ Route::post('/queues/{id}/call', [QueueController::class, 'call']);
 Route::post('/queues/{id}/recall', [QueueController::class, 'recall']);
 Route::post('/queues/{id}/complete', [QueueController::class, 'complete']);
 Route::post('/queues/{id}/cancel', [QueueController::class, 'cancel']);
-Route::delete('/queues/{id}', [QueueController::class, 'destroy']);
+
+// Delete single queue — butuh token
+Route::delete('/queues/{id}', [QueueController::class, 'destroy'])->middleware('auth:sanctum');
+
 
 // Global delete with AdminDev verification
 Route::delete('/queues', function (Request $request) {
