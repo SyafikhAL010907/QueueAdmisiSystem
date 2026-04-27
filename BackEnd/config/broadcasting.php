@@ -15,36 +15,26 @@ return [
     |
     */
 
-    'default' => env('BROADCAST_CONNECTION', 'null'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Broadcast Connections
-    |--------------------------------------------------------------------------
-    |
-    | Here you may define all of the broadcast connections that will be used
-    | to broadcast events to other systems or over WebSockets. Samples of
-    | each available type of connection are provided inside this array.
-    |
-    */
+    'default' => 'reverb',
 
     'connections' => [
 
         'reverb' => [
             'driver' => 'reverb',
-            'key' => env('REVERB_APP_KEY'),
-            'secret' => env('REVERB_APP_SECRET'),
-            'app_id' => env('REVERB_APP_ID'),
+            'key' => 'azrdrsjgfa1g49yuqvml',
+            'secret' => 'fgtx1u9w0h4q6vmnrkzl',
+            'app_id' => '123456',
             'options' => [
-                'host' => env('REVERB_HOST'),
-                'port' => env('REVERB_PORT', 443),
-                'scheme' => env('REVERB_SCHEME', 'https'),
-                'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
+                'host' => 'queueadmisisystem.onrender.com',
+                'port' => 443,
+                'scheme' => 'https',
+                'useTLS' => true,
             ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
             ],
         ],
+
 
         'pusher' => [
             'driver' => 'pusher',
