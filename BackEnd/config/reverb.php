@@ -67,7 +67,7 @@ return [
     |
     | Here you may define how Reverb applications are managed. If you choose
     | to use the "config" provider, you may define an array of apps which
-    | your server will support, including their connection credentials.
+    | your server will support, including their connection credvventials.
     |
     */
 
