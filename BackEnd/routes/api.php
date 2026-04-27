@@ -10,6 +10,16 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
+// DEBUG ROUTE (Hapus nanti)
+Route::get('/debug-db', function() {
+    return [
+        'total_users' => \App\Models\User::count(),
+        'users' => \App\Models\User::select('id', 'name', 'email', 'role')->get(),
+        'env_app_key' => substr(env('APP_KEY'), 0, 10) . '...',
+    ];
+});
+
+
 // --- Roles (public — dipakai dropdown Tambah Akun) ---
 Route::get('/roles', function () {
     // Cari nomor loket tertinggi dari user yang ada

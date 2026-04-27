@@ -29,21 +29,28 @@ class SqlSeeder extends Seeder
         try {
             DB::unprepared($sql);
             
-            // 1. Reset Password Admin Dev
-            $affectedAdmin = DB::table('users')->whereRaw('LOWER(email) = ?', [strtolower('AdminDev@gmail.com')])->update([
-                'password' => \Illuminate\Support\Facades\Hash::make('Admindev1')
-            ]);
+            // 1. Pastikan Admin Dev ADA dan Passwordnya Admindev1
+            DB::table('users')->updateOrInsert(
+                ['email' => 'AdminDev@gmail.com'],
+                [
+                    'name' => 'Super Admin Dev',
+                    'role' => 'Admin Dev',
+                    'password' => \Illuminate\Support\Facades\Hash::make('Admindev1'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
             
             // 2. Reset Password Semua Admin Loket (1-4) jadi 12345678
             $affectedLoket = DB::table('users')->where('role', 'like', 'Admin Loket %')->update([
                 'password' => \Illuminate\Support\Facades\Hash::make('12345678')
             ]);
 
-            \Illuminate\Support\Facades\Log::info("SQL Import - Password Reset Summary", [
-                'admin_dev_updated' => $affectedAdmin,
-                'loket_users_updated' => $affectedLoket,
-                'total_users_in_db' => DB::table('users')->count()
+            \Illuminate\Support\Facades\Log::info("SQL Import - Indestructible Sync DONE", [
+                'total_users_in_db' => DB::table('users')->count(),
+                'loket_users_updated' => $affectedLoket
             ]);
+
 
 
 
