@@ -29,10 +29,23 @@ class SqlSeeder extends Seeder
         try {
             DB::unprepared($sql);
             
-            // PAKSA UPDATE PASSWORD ADMIN BIAR PASTI BISA LOGIN (Huruf gede kecil aman)
-            DB::table('users')->whereRaw('LOWER(email) = ?', [strtolower('AdminDev@gmail.com')])->update([
+            // 1. Reset Password Admin Dev
+            $affectedAdmin = DB::table('users')->whereRaw('LOWER(email) = ?', [strtolower('AdminDev@gmail.com')])->update([
                 'password' => \Illuminate\Support\Facades\Hash::make('Admindev1')
             ]);
+            
+            // 2. Reset Password Semua Admin Loket (1-4) jadi 12345678
+            $affectedLoket = DB::table('users')->where('role', 'like', 'Admin Loket %')->update([
+                'password' => \Illuminate\Support\Facades\Hash::make('12345678')
+            ]);
+
+            \Illuminate\Support\Facades\Log::info("SQL Import - Password Reset Summary", [
+                'admin_dev_updated' => $affectedAdmin,
+                'loket_users_updated' => $affectedLoket,
+                'total_users_in_db' => DB::table('users')->count()
+            ]);
+
+
 
 
             $this->command->info("Impor data berhasil & Password admin di-reset!");
