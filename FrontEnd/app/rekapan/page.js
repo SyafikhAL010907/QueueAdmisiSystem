@@ -158,8 +158,9 @@ export default function RekapanPage() {
       }
 
       const parsedUser = JSON.parse(savedUser);
-      if (parsedUser.role !== "Admin Dev" && parsedUser.role !== "AdminDev") {
-        Swal.fire("Akses Ditolak!", "Hanya Admin Dev yang dapat menghapus seluruh data.", "error");
+      // Boleh Admin Dev atau admin operasional biasa
+      if (!["Admin Dev", "AdminDev", "admin"].includes(parsedUser.role)) {
+        Swal.fire("Akses Ditolak!", "Hanya Admin yang dapat menghapus seluruh data.", "error");
         return;
       }
 

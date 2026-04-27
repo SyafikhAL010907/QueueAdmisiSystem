@@ -132,10 +132,10 @@ Route::post('/queues/{id}/cancel', [QueueController::class, 'cancel']);
 Route::delete('/queues/{id}', [QueueController::class, 'destroy'])->middleware('auth:sanctum');
 
 
-// Global delete with AdminDev verification
+// Global delete with Admin verification
 Route::delete('/queues', function (Request $request) {
-    if (!$request->user() || !in_array($request->user()->role, ['Admin Dev', 'AdminDev'])) {
-        return response()->json(['message' => 'Unauthorized. Hanya AdminDev yang diizinkan.'], 403);
+    if (!$request->user() || !in_array($request->user()->role, ['Admin Dev', 'AdminDev', 'admin'])) {
+        return response()->json(['message' => 'Unauthorized. Hanya Admin yang diizinkan.'], 403);
     }
     return app(QueueController::class)->destroyAll();
 })->middleware('auth:sanctum');

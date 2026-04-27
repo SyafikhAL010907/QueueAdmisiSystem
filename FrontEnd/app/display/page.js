@@ -19,18 +19,34 @@ export default function DisplayPage() {
   // 🔊 Unmute video setelah user klik (audio unlock)
   useEffect(() => {
     if (audioUnlocked && videoRef.current) {
-      videoRef.current.muted = false;
-      videoRef.current.volume = 1.0;
+      try {
+        videoRef.current.muted = false;
+        videoRef.current.volume = 1.0;
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(e => console.log("Play failed:", e));
+        }
+      } catch (e) {
+        console.error("Video error:", e);
+      }
     }
   }, [audioUnlocked]);
 
   // 🎚️ Audio Ducking: mute video saat TTS jalan, unmute saat selesai
   useEffect(() => {
     if (!videoRef.current) return;
-    if (isSpeaking) {
-      videoRef.current.muted = true; // Senyapkan video saat panggil antrian
-    } else if (audioUnlocked) {
-      videoRef.current.muted = false; // Kembalikan suara video setelah selesai
+    try {
+      if (isSpeaking) {
+        videoRef.current.muted = true; // Senyapkan video saat panggil antrian
+      } else if (audioUnlocked) {
+        videoRef.current.muted = false; // Kembalikan suara video setelah selesai
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(e => console.log("Play ducking failed:", e));
+        }
+      }
+    } catch (e) {
+      console.error("Video ducking error:", e);
     }
   }, [isSpeaking, audioUnlocked]);
 
