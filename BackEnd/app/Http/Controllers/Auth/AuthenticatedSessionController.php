@@ -25,9 +25,24 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse|JsonResponse
     {
-        $request->authenticate();
+        \Illuminate\Support\Facades\Log::info('Login Attempt', [
+            'email' => $request->email,
+            'has_session' => $request->hasSession(),
+            'headers' => $request->headers->all(),
+        ]);
+
+        try {
+            $request->authenticate();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Login Authentication Failed', [
+                'message' => $e->getMessage(),
+                'email' => $request->email
+            ]);
+            throw $e;
+        }
 
         $request->session()->regenerate();
+
 
         if ($request->wantsJson()) {
             $user = $request->user();
