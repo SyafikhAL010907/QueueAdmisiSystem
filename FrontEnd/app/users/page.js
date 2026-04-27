@@ -6,6 +6,87 @@ import { getApiUrl } from "@/src/utils/apiConfig";
 
 const API_URL = getApiUrl();
 
+// ─── Notification Modal (pengganti alert) ───────────────────────────────────
+// type: 'error' | 'warning' | 'info'
+function NotifModal({ notif, onClose }) {
+    if (!notif) return null;
+    const cfg = {
+        error:   { bg: "bg-red-50",    border: "border-red-200",    icon: "🚫", titleColor: "text-red-700",    btnColor: "bg-red-600 hover:bg-red-700",    label: "Tidak Bisa Dihapus" },
+        warning: { bg: "bg-orange-50", border: "border-orange-200", icon: "⚠️",  titleColor: "text-orange-700", btnColor: "bg-orange-500 hover:bg-orange-600", label: "Ada Antrian Aktif" },
+        info:    { bg: "bg-blue-50",   border: "border-blue-200",   icon: "ℹ️",  titleColor: "text-blue-700",   btnColor: "bg-blue-600 hover:bg-blue-700",   label: "Info" },
+    };
+    const c = cfg[notif.type] || cfg.info;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-sm border-2 ${c.border}`}>
+                {/* Header strip */}
+                <div className={`${c.bg} ${c.border} border-b rounded-t-2xl px-6 py-4 flex items-center gap-3`}>
+                    <span className="text-3xl">{c.icon}</span>
+                    <div>
+                        <p className={`font-bold text-base ${c.titleColor}`}>{c.label}</p>
+                        <p className="text-xs text-gray-500">{notif.subtitle || "Perhatikan informasi di bawah ini."}</p>
+                    </div>
+                </div>
+                {/* Body */}
+                <div className="px-6 py-5">
+                    <p className="text-gray-700 text-sm leading-relaxed">{notif.message}</p>
+                    {notif.detail && (
+                        <div className={`mt-3 p-3 rounded-lg ${c.bg} border ${c.border}`}>
+                            <p className="text-xs font-semibold text-gray-500 mb-1">{notif.detailLabel || "Detail:"}</p>
+                            {notif.detail.map((d, i) => (
+                                <p key={i} className={`text-sm font-medium ${c.titleColor}`}>{d}</p>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                {/* Footer */}
+                <div className="px-6 pb-5 flex justify-end">
+                    <button onClick={onClose}
+                        className={`px-5 py-2 ${c.btnColor} text-white rounded-lg text-sm font-semibold transition`}>
+                        Mengerti
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Delete Confirm Modal ───────────────────────────────────────────────────
+function DeleteConfirmModal({ target, onConfirm, onClose, loading }) {
+    if (!target) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border-2 border-red-200">
+                <div className="bg-red-50 border-b border-red-200 rounded-t-2xl px-6 py-4 flex items-center gap-3">
+                    <span className="text-3xl">🗑️</span>
+                    <div>
+                        <p className="font-bold text-base text-red-700">Konfirmasi Hapus</p>
+                        <p className="text-xs text-gray-500">Tindakan ini tidak bisa dibatalkan</p>
+                    </div>
+                </div>
+                <div className="px-6 py-5">
+                    <p className="text-gray-700 text-sm">Yakin ingin menghapus akun admin ini?</p>
+                    <div className="mt-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
+                        <p className="text-xs text-gray-400 mb-1">Akun yang akan dihapus:</p>
+                        <p className="font-semibold text-gray-800">{target.name}</p>
+                        <p className="text-xs text-gray-500">{target.email}</p>
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium">{target.role}</span>
+                    </div>
+                </div>
+                <div className="px-6 pb-5 flex justify-end gap-3">
+                    <button onClick={onClose} disabled={loading}
+                        className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50">Batal</button>
+                    <button onClick={onConfirm} disabled={loading}
+                        className="px-5 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-60 transition flex items-center gap-2">
+                        {loading && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"/>}
+                        {loading ? "Menghapus..." : "Ya, Hapus"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ─── Reusable Modal Wrapper ───────────────────────────────────────────────────
 function Modal({ title, onClose, children }) {
     return (
@@ -55,8 +136,13 @@ export default function UsersPage() {
     const [submitting, setSubmitting] = useState(false);
     const [deleting, setDeleting] = useState(null);
 
+    // Notifikasi & konfirmasi hapus
+    const [notif, setNotif] = useState(null);          // { type, message, detail, ... }
+    const [deleteConfirm, setDeleteConfirm] = useState(null); // { id, name, email, role }
+
     // Add form
-    const [addForm, setAddForm] = useState({ name: "", email: "", password: "", confirmPassword: "", role: "Admin Loket 1" });
+    const [addForm, setAddForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
+    const [nextLoketRole, setNextLoketRole] = useState(""); // auto-detect dari API
     // Edit form
     const [editForm, setEditForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
 
@@ -78,24 +164,25 @@ export default function UsersPage() {
         }
     }, []);
 
+    // Fetch next loket role otomatis (loket-count + 1)
+    const fetchNextLoket = useCallback(async () => {
+        try {
+            const res = await fetch(`${API_URL}/loket-count`, {
+                headers: { Accept: "application/json" },
+                credentials: "include",
+            });
+            const data = await res.json();
+            const next = (data?.count ?? 0) + 1;
+            setNextLoketRole(`Admin Loket ${next}`);
+        } catch {
+            setNextLoketRole("Admin Loket 1");
+        }
+    }, []);
+
     useEffect(() => {
         fetchUsers();
-        // Fetch available roles from DB ENUM
-        fetch(`${API_URL}/roles`, { headers: { Accept: "application/json" } })
-            .then((r) => r.json())
-            .then((roles) => {
-                if (Array.isArray(roles) && roles.length > 0) {
-                    setAvailableRoles(roles);
-                    // Set default ke opsi pertama bukan AdminDev
-                    const firstNonDev = roles.find((r) => !r.includes("Dev")) || roles[0];
-                    setAddForm((prev) => ({ ...prev, role: firstNonDev }));
-                }
-            })
-            .catch(() => {
-                // Fallback jika API gagal
-                setAvailableRoles(["Admin Dev", "Admin Loket 1", "Admin Loket 2", "Admin Loket 3", "Admin Loket 4"]);
-            });
-    }, [fetchUsers]);
+        fetchNextLoket();
+    }, [fetchUsers, fetchNextLoket]);
 
     // ── Add ────────────────────────────────────────────────────────────────────
     const handleAdd = async (e) => {
@@ -104,19 +191,25 @@ export default function UsersPage() {
             alert("Password dan Konfirmasi Password tidak sama!");
             return;
         }
+        if (!nextLoketRole) {
+            alert("Gagal mendeteksi role loket berikutnya. Coba refresh halaman.");
+            return;
+        }
         setSubmitting(true);
         try {
             const res = await fetch(`${API_URL}/users`, {
                 method: "POST",
                 credentials: "include",
                 headers: { Accept: "application/json", "Content-Type": "application/json" },
-                body: JSON.stringify({ name: addForm.name, email: addForm.email, password: addForm.password, role: addForm.role }),
+                body: JSON.stringify({ name: addForm.name, email: addForm.email, password: addForm.password, role: nextLoketRole }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Gagal menambah admin.");
             setShowAdd(false);
-            setAddForm({ name: "", email: "", password: "", confirmPassword: "", role: "AdminLoket1" });
+            setAddForm({ name: "", email: "", password: "", confirmPassword: "" });
+            // Refresh data dan hitung ulang loket berikutnya
             await fetchUsers();
+            await fetchNextLoket();
         } catch (err) {
             alert(err.message);
         } finally {
@@ -158,20 +251,84 @@ export default function UsersPage() {
         }
     };
 
-    // ── Delete ─────────────────────────────────────────────────────────────────
-    const handleDelete = async (id, name) => {
-        if (!confirm(`Hapus admin "${name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
-        setDeleting(id);
+    // ── Delete ────────────────────────────────────────────────────────────────────
+    // Validasi sebelum hapus:
+    // 1. Harus loket dengan nomor TERTINGGI
+    // 2. Tidak boleh ada antrian aktif (waiting / called) di loket tsb
+    const handleDeleteRequest = async (user) => {
+        const match = user.role.match(/Admin Loket (\d+)/);
+        if (!match) {
+            // Bukan loket biasa, langsung tampil konfirmasi
+            setDeleteConfirm(user);
+            return;
+        }
+        const loketNum = parseInt(match[1]);
+
+        // Hitung nomor loket tertinggi yang ada
+        const loketUsers = users.filter((u) => /Admin Loket (\d+)/.test(u.role));
+        const maxLoket = Math.max(...loketUsers.map((u) => parseInt(u.role.match(/Admin Loket (\d+)/)[1])));
+
+        // Validasi 1: Harus nomor tertinggi
+        if (loketNum < maxLoket) {
+            setNotif({
+                type: "error",
+                subtitle: "Urutan hapus tidak valid",
+                message: `Loket harus dihapus dari nomor terbesar ke terkecil. Hapus dulu Loket ${maxLoket} sebelum menghapus Loket ${loketNum}.`,
+                detailLabel: "Urutan yang benar:",
+                detail: Array.from({ length: maxLoket }, (_, i) => maxLoket - i)
+                    .map((n) => `${n === loketNum ? "→" : ""} Admin Loket ${n}${n === maxLoket ? " (hapus ini dulu)" : n === loketNum ? " (yang mau dihapus)" : ""}`),
+            });
+            return;
+        }
+
+        // Validasi 2: Cek antrian aktif di loket ini
         try {
-            const res = await fetch(`${API_URL}/users/${id}`, {
+            const res = await fetch(`${API_URL}/queues`, {
+                headers: { Accept: "application/json" },
+                credentials: "include",
+            });
+            const allQueues = await res.json();
+            const activeQueues = Array.isArray(allQueues)
+                ? allQueues.filter(
+                      (q) => String(q.loket) === String(loketNum) && (q.status === "waiting" || q.status === "called")
+                  )
+                : [];
+
+            if (activeQueues.length > 0) {
+                setNotif({
+                    type: "warning",
+                    subtitle: `Masih ada ${activeQueues.length} antrian aktif`,
+                    message: `Loket ${loketNum} masih memiliki antrian yang belum selesai. Selesaikan atau batalkan semua antrian di loket ini sebelum menghapus akunnya.`,
+                    detailLabel: "Antrian aktif di Loket " + loketNum + ":",
+                    detail: activeQueues.slice(0, 5).map(
+                        (q) => `• ${q.queue_number} — ${q.name} (${q.status === "called" ? "Sedang dilayani" : "Menunggu"})`
+                    ).concat(activeQueues.length > 5 ? [`... dan ${activeQueues.length - 5} lainnya`] : []),
+                });
+                return;
+            }
+        } catch {
+            // Jika gagal fetch antrian, tetap lanjut ke konfirmasi
+        }
+
+        // Lolos semua validasi → tampil modal konfirmasi
+        setDeleteConfirm(user);
+    };
+
+    const handleDeleteConfirmed = async () => {
+        if (!deleteConfirm) return;
+        setDeleting(deleteConfirm.id);
+        try {
+            const res = await fetch(`${API_URL}/users/${deleteConfirm.id}`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: { Accept: "application/json" },
             });
             if (!res.ok) throw new Error("Gagal menghapus admin.");
+            setDeleteConfirm(null);
             await fetchUsers();
+            await fetchNextLoket();
         } catch (err) {
-            alert(err.message);
+            setNotif({ type: "error", subtitle: "Gagal", message: err.message });
         } finally {
             setDeleting(null);
         }
@@ -269,7 +426,7 @@ export default function UsersPage() {
                                                     Edit
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(user.id, user.name)}
+                                                    onClick={() => handleDeleteRequest(user)}
                                                     disabled={deleting === user.id}
                                                     className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-medium hover:bg-red-500 hover:text-white transition disabled:opacity-50"
                                                 >
@@ -302,27 +459,15 @@ export default function UsersPage() {
                         <Field label="Konfirmasi Password" type="password" value={addForm.confirmPassword} required
                             onChange={(e) => setAddForm({ ...addForm, confirmPassword: e.target.value })}
                             placeholder="Ulangi password" />
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Pilih Role <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                                value={addForm.role}
-                                onChange={(e) => setAddForm({ ...addForm, role: e.target.value })}
-                                className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition bg-white"
-                                required
-                            >
-                                {availableRoles.length > 0 ? (
-                                    availableRoles
-                                        .filter((r) => r !== "Admin Dev")
-                                        .map((r) => (
-                                            <option key={r} value={r}>{r}</option>
-                                        ))
-                                ) : (
-                                    // Fallback sementara saat loading roles
-                                    <option value={addForm.role}>{addForm.role}</option>
-                                )}
-                            </select>
+                        {/* Role otomatis — info badge */}
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+                            <span className="text-blue-500 text-lg">🏷️</span>
+                            <div>
+                                <p className="text-sm font-medium text-blue-700">Role otomatis ditetapkan:</p>
+                                <p className="text-base font-bold text-blue-800">
+                                    {nextLoketRole || "Memuat..."}
+                                </p>
+                            </div>
                         </div>
                         <div className="flex justify-end gap-3 mt-2">
                             <button type="button" onClick={() => setShowAdd(false)}
@@ -364,6 +509,16 @@ export default function UsersPage() {
                     </form>
                 </Modal>
             )}
+            {/* ── MODAL: NOTIFIKASI (error / warning) ───────────────── */}
+            <NotifModal notif={notif} onClose={() => setNotif(null)} />
+
+            {/* ── MODAL: KONFIRMASI HAPUS ───────────────────────────── */}
+            <DeleteConfirmModal
+                target={deleteConfirm}
+                onConfirm={handleDeleteConfirmed}
+                onClose={() => setDeleteConfirm(null)}
+                loading={deleting === deleteConfirm?.id}
+            />
         </Sidebar>
     );
 }

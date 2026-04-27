@@ -51,6 +51,7 @@ export default function RekapanPage() {
       try {
         const res = await fetch(`${API_URL}/queues`, {
           headers: { Accept: "application/json" },
+          credentials: "include",
         });
         if (!res.ok) throw new Error("Gagal fetch data");
         const allData = await res.json();
@@ -87,32 +88,30 @@ export default function RekapanPage() {
 
     if (!result.isConfirmed) return;
 
+    // ⚡ Optimistic update — hapus dari UI dulu
+    const prevQueues = queues;
+    setQueues(prev => prev.filter(q => q.id !== id));
+
     try {
       const res = await fetch(`${API_URL}/queues/${id}`, {
         method: "DELETE",
         headers: { Accept: "application/json" },
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Gagal menghapus data");
 
-      // Refresh data
-      const resRefresh = await fetch(`${API_URL}/api/queues`, {
-        headers: { Accept: "application/json" },
-      });
-      const allData = await resRefresh.json();
-      const filtered = allData.filter(q => q.status === "completed" || q.status === "canceled");
-      setQueues(filtered);
-
       Swal.fire({
-        title: "Terhapus!",
-        text: "Data antrian telah dihapus.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false
+        title: "Terhapus!", icon: "success",
+        toast: true, position: "top-end",
+        timer: 1200, showConfirmButton: false, timerProgressBar: true,
       });
     } catch (err) {
+      // Rollback jika gagal
+      setQueues(prevQueues);
       Swal.fire("Gagal", err.message, "error");
     }
   };
+
 
   const handleGlobalDelete = async () => {
     const result = await Swal.fire({
@@ -383,6 +382,7 @@ export default function RekapanPage() {
                   <th className="p-4 text-xs font-black uppercase tracking-widest text-slate-500">Nama</th>
                   <th className="p-4 text-xs font-black uppercase tracking-widest text-slate-500">Loket</th>
                   <th className="p-4 text-xs font-black uppercase tracking-widest text-slate-500">Tanggal Selesai</th>
+                  <th className="p-4 text-xs font-black uppercase tracking-widest text-slate-500">Status</th>
                 </tr>
               </thead>
 
@@ -412,11 +412,24 @@ export default function RekapanPage() {
                           <Trash2 size={16} />
                         </button>
                       </td>
+                      <td className="p-4">
+                        {item.status === "completed" ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                            Selesai
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-100">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
+                            Dibatalkan
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="text-center py-20 text-slate-300 font-bold italic">
+                    <td colSpan="5" className="text-center py-20 text-slate-300 font-bold italic">
                       Tidak ada data rekapan
                     </td>
                   </tr>

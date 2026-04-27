@@ -300,7 +300,7 @@ CREATE TABLE `users` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
-  `role` enum('Admin Dev','Admin Loket 1','Admin Loket 2','Admin Loket 3','Admin Loket 4') NOT NULL DEFAULT 'Admin Dev',
+  `role` varchar(50) NOT NULL DEFAULT 'Admin Dev',
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `remember_token` varchar(100) DEFAULT NULL,

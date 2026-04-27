@@ -12,21 +12,30 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
 // --- Roles (public — dipakai dropdown Tambah Akun) ---
 Route::get('/roles', function () {
-    // Ambil definisi ENUM langsung dari MySQL
-    $result = \Illuminate\Support\Facades\DB::select(
-        "SHOW COLUMNS FROM users LIKE 'role'"
-    );
-    // Format: enum('Admin Dev','Admin Loket 1',...)
-    $rawType = $result[0]->Type ?? '';
-    preg_match("/^enum\((.+)\)$/i", $rawType, $matches);
-    $roles = [];
-    if (!empty($matches[1])) {
-        // Hapus petik dan split koma
-        $roles = array_map(
-            fn($v) => trim($v, "' \""),
-            explode(',', $matches[1])
-        );
+    // Cari nomor loket tertinggi dari user yang ada
+    $users = \App\Models\User::where('role', 'like', 'Admin Loket %')->get('role');
+
+    $maxLoket = 0;
+    foreach ($users as $user) {
+        preg_match('/Admin Loket (\d+)/', $user->role, $m);
+        if (!empty($m[1]) && (int)$m[1] > $maxLoket) {
+            $maxLoket = (int)$m[1];
+        }
     }
+
+    // Jika belum ada loket sama sekali, mulai dari 1; selalu sediakan slot +1 berikutnya
+    $upTo = max(1, $maxLoket + 1);
+
+    $roles = ['Admin Loket ' . $upTo]; // default option teratas = loket baru
+    // Tambahkan semua loket yang sudah ada (urut dari 1)
+    for ($i = 1; $i <= $maxLoket; $i++) {
+        $roles[] = 'Admin Loket ' . $i;
+    }
+
+    // Urutkan dan hapus duplikat
+    $roles = array_values(array_unique($roles));
+    sort($roles);
+
     return response()->json($roles);
 });
 
@@ -44,29 +53,30 @@ Route::middleware('auth')->group(function () {
         );
     });
 
-    // Create new admin
+    // Create new admin (validasi dinamis — support loket berapapun)
     Route::post('/users', function (Request $request) {
-        $validRoles = ['Admin Dev', 'Admin Loket 1', 'Admin Loket 2', 'Admin Loket 3', 'Admin Loket 4'];
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', 'string', 'in:' . implode(',', $validRoles)],
+            // Role harus 'Admin Dev' ATAU 'Admin Loket {angka}'
+            'role'     => ['required', 'string', 'regex:/^(Admin Dev|Admin Loket \d+)$/'],
         ]);
         $user = \App\Models\User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
-            'role' => $validated['role'],
+            'role'     => $validated['role'],
         ]);
         return response()->json($user->only('id', 'name', 'email', 'role', 'created_at'), 201);
     });
 
-    // Update admin (password optional)
+    // Update admin (password optional) — support semua role loket
     Route::patch('/users/{id}', function (Request $request, $id) {
-        $user = \App\Models\User::where('role', 'admin')->findOrFail($id);
+        // Cari user yang BUKAN AdminDev (semua role loket bisa di-edit)
+        $user = \App\Models\User::whereNotIn('role', ['AdminDev', 'Admin Dev'])->findOrFail($id);
         $rules = [
-            'name' => ['required', 'string', 'max:255'],
+            'name'  => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email,' . $user->id],
         ];
         if ($request->filled('password')) {
@@ -81,11 +91,19 @@ Route::middleware('auth')->group(function () {
         return response()->json($user->only('id', 'name', 'email', 'created_at'));
     });
 
-    // Delete admin
+    // Delete admin — support semua role loket
     Route::delete('/users/{id}', function ($id) {
-        $user = \App\Models\User::where('role', 'admin')->findOrFail($id);
+        $user = \App\Models\User::whereNotIn('role', ['AdminDev', 'Admin Dev'])->findOrFail($id);
         $user->delete();
         return response()->json(['message' => 'Admin berhasil dihapus.']);
+    });
+
+    // Loket count — jumlah loket aktif berdasarkan user Admin Loket N
+    Route::get('/loket-count', function () {
+        $count = \App\Models\User::where('role', 'like', 'Admin Loket %')
+            ->count();
+        // Minimum 1 loket agar UI tidak kosong
+        return response()->json(['count' => max(1, $count)]);
     });
 });
 

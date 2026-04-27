@@ -1,6 +1,5 @@
 "use client"; // 🚀 Penting agar tidak Hydration Error
 import { useState, useEffect, useRef } from "react";
-import { playVoice, getActiveLang } from "../lib/voiceEngine";
 import { getApiUrl } from "@/src/utils/apiConfig";
 
 const API_URL = getApiUrl();
@@ -97,14 +96,12 @@ export default function MobileQueue() {
 
         // 🔥 Trigger saat dipanggil
         if (queueData.status === "called" && lastStatusRef.current !== "called") {
-            // 1. Haptic Feedback (Vibrate)
+            // Haptic Feedback saja (vibrate) — suara diumumkan dari layar Display/TV
             if (typeof navigator !== "undefined" && navigator.vibrate) {
                 navigator.vibrate([500, 200, 500, 200, 500]);
             }
-
-            // 2. Voice Synth
-            const lang = getActiveLang();
-            playVoice(queueData.queue_number, queueData.loket, lang);
+            // ⛔ TIDAK play voice di sini — mobile bukan speaker utama
+            // Suara diputar oleh AudioProvider di halaman /display
         }
 
         // 🕒 Auto-Reset (Tunggu 4 detik setelah selesai/batal)

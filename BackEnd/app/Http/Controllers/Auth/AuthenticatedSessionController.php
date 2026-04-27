@@ -32,28 +32,25 @@ class AuthenticatedSessionController extends Controller
         if ($request->wantsJson()) {
             $user = $request->user();
 
-            // Peta role DB → label dengan spasi
-            $roleMap = [
-                'AdminDev' => 'Admin Dev',
+            // Normalisasi role: handle legacy format tanpa spasi → format dengan spasi
+            // Format baru (sudah pakai spasi) langsung diteruskan tanpa mapping
+            $role = $user->role;
+            $legacyMap = [
+                'AdminDev'    => 'Admin Dev',
                 'AdminLoket1' => 'Admin Loket 1',
                 'AdminLoket2' => 'Admin Loket 2',
                 'AdminLoket3' => 'Admin Loket 3',
                 'AdminLoket4' => 'Admin Loket 4',
-                // Jika sudah pakai format spasi, langsung dikembalikan
-                'Admin Dev' => 'Admin Dev',
-                'Admin Loket 1' => 'Admin Loket 1',
-                'Admin Loket 2' => 'Admin Loket 2',
-                'Admin Loket 3' => 'Admin Loket 3',
-                'Admin Loket 4' => 'Admin Loket 4',
             ];
-            $normalizedRole = $roleMap[$user->role] ?? $user->role;
+            // Jika ada di legacy map → konversi. Jika sudah format baru → langsung pakai.
+            $normalizedRole = $legacyMap[$role] ?? $role;
 
             return response()->json([
                 'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
+                    'id'    => $user->id,
+                    'name'  => $user->name,
                     'email' => $user->email,
-                    'role' => $normalizedRole,
+                    'role'  => $normalizedRole,
                 ],
                 'role' => $normalizedRole,
             ]);

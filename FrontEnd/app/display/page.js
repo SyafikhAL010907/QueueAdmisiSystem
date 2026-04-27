@@ -50,8 +50,20 @@ export default function DisplayPage() {
   const [queues, setQueues] = useState([]);
   const [time, setTime] = useState("");
   const [errorStatus, setErrorStatus] = useState(null);
+  const [loketCount, setLoketCount] = useState(4);
 
   const [isError, setIsError] = useState(false);
+
+  // Fetch jumlah loket aktif (dinamis)
+  useEffect(() => {
+    fetch(`${API_URL}/loket-count`, {
+      headers: { Accept: "application/json" },
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then((data) => { if (data?.count) setLoketCount(data.count); })
+      .catch(() => setLoketCount(4));
+  }, []);
 
   /* ══════════ POLL: full queue list (5 s) ════════════════════════════════ */
   useEffect(() => {
@@ -150,8 +162,8 @@ export default function DisplayPage() {
                 <span className="w-2 h-2 bg-sky-500 rounded-full animate-pulse"></span>
                 Status Loket
               </h2>
-              <div className="grid grid-cols-2 gap-3">
-                {[1, 2, 3, 4].map((loket) => {
+              <div className={`grid gap-3 ${loketCount > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                {Array.from({ length: loketCount }, (_, i) => i + 1).map((loket) => {
                   const active = hasMounted ? getActiveForLoket(loket) : null;
                   return (
                     <div

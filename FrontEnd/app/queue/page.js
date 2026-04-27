@@ -18,6 +18,7 @@ export default function QueuePage() {
   const [name, setName] = useState("");
   const [userRole, setUserRole] = useState("");
   const [activeLang, setActiveLang] = useState("id");
+  const [loketCount, setLoketCount] = useState(4);
   const [darkMode, setDarkMode] = useState(() =>
     typeof window !== "undefined"
       ? localStorage.getItem("theme") === "dark"
@@ -52,6 +53,17 @@ export default function QueuePage() {
     if (role === "AdminLoket3") role = "Admin Loket 3";
     if (role === "AdminLoket4") role = "Admin Loket 4";
     setUserRole(role);
+  }, []);
+
+  // Fetch jumlah loket aktif dari API (dinamis)
+  useEffect(() => {
+    fetch(`${BASE_URL}/loket-count`, {
+      headers: { Accept: "application/json" },
+      credentials: "include",
+    })
+      .then((r) => r.json())
+      .then((data) => { if (data?.count) setLoketCount(data.count); })
+      .catch(() => setLoketCount(4)); // fallback 4 loket jika API gagal
   }, []);
 
   /* ══════════ FETCHING ══════════════════════════════════════════════════ */
@@ -99,7 +111,9 @@ export default function QueuePage() {
       console.log("DEBUG: handleTambah response status:", res.status);
 
       if (res.status === 200 || res.status === 201) {
-        Swal.fire("Berhasil!", "Antrian ditambahkan", "success");
+        // Toast ringan — tidak memblokir UI
+        Swal.fire({ icon: "success", title: "Antrian ditambahkan", toast: true,
+          position: "top-end", timer: 1800, showConfirmButton: false, timerProgressBar: true });
         setName("");
         fetchQueues();
       } else if (res.status === 419) {
@@ -126,28 +140,29 @@ export default function QueuePage() {
   };
 
   const handleDone = async (id) => {
-    console.log("DEBUG: handleDone triggered for ID:", id);
+    // ⚡ Optimistic update — UI instan dulu
+    setQueues(prev => prev.map(q => q.id === id ? { ...q, status: 'completed' } : q));
     try {
       const res = await fetch(`${BASE_URL}/queues/${id}/complete`, {
         method: "POST",
         headers: { Accept: "application/json" },
         credentials: "include",
       });
-      console.log("DEBUG: handleDone response status:", res.status);
       if (res.ok) {
-        Swal.fire("Berhasil!", "Antrian selesai", "success");
-        fetchQueues();
+        Swal.fire({ icon: "success", title: "Antrian selesai", toast: true,
+          position: "top-end", timer: 1200, showConfirmButton: false, timerProgressBar: true });
+        fetchQueues(); // Sinkron di background
       } else {
+        // Rollback jika gagal
+        setQueues(prev => prev.map(q => q.id === id ? { ...q, status: 'called' } : q));
         const data = await res.json();
         Swal.fire("Gagal", data.message || "Gagal menyelesaikan antrian", "error");
       }
     } catch (err) {
-      console.error("DEBUG: handleDone error:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Koneksi Server Terputus",
-        text: "Gagal menghubungi server untuk menyelesaikan antrian.",
-      });
+      // Rollback
+      setQueues(prev => prev.map(q => q.id === id ? { ...q, status: 'called' } : q));
+      Swal.fire({ icon: "error", title: "Koneksi Server Terputus",
+        text: "Gagal menghubungi server untuk menyelesaikan antrian." });
     }
   };
   const handleRecall = async (id) => {
@@ -193,28 +208,29 @@ export default function QueuePage() {
   };
 
   const handleCancel = async (id) => {
-    console.log("DEBUG: handleCancel triggered for ID:", id);
+    // ⚡ Optimistic update — UI instan dulu
+    setQueues(prev => prev.map(q => q.id === id ? { ...q, status: 'canceled' } : q));
     try {
       const res = await fetch(`${BASE_URL}/queues/${id}/cancel`, {
         method: "POST",
         headers: { Accept: "application/json" },
         credentials: "include",
       });
-      console.log("DEBUG: handleCancel response status:", res.status);
       if (res.ok) {
-        Swal.fire("Berhasil!", "Antrian dibatalkan", "success");
-        fetchQueues();
+        Swal.fire({ icon: "success", title: "Antrian dibatalkan", toast: true,
+          position: "top-end", timer: 1200, showConfirmButton: false, timerProgressBar: true });
+        fetchQueues(); // Sinkron di background
       } else {
+        // Rollback jika gagal
+        setQueues(prev => prev.map(q => q.id === id ? { ...q, status: 'waiting' } : q));
         const data = await res.json();
         Swal.fire("Gagal", data.message || "Gagal membatalkan antrian", "error");
       }
     } catch (err) {
-      console.error("DEBUG: handleCancel error:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Koneksi Server Terputus",
-        text: "Gagal menghubungi server untuk membatalkan antrian.",
-      });
+      // Rollback
+      setQueues(prev => prev.map(q => q.id === id ? { ...q, status: 'waiting' } : q));
+      Swal.fire({ icon: "error", title: "Koneksi Server Terputus",
+        text: "Gagal menghubungi server untuk membatalkan antrian." });
     }
   };
 
@@ -224,37 +240,20 @@ export default function QueuePage() {
    * 2. Refreshes local queue list
    */
   const callQueue = async (id, name, loket) => {
-    console.log("🚀 Memanggil API...", { id, name, loket });
-    // ... sisa kodingan fetch lo ...
-    console.log("Remote: Perintah suara dikirim ke Display...");
-
     // Pre-emptive check: already called?
     const isBusy = queues.some(q => q.status === 'called' && Number(q.loket) === loket);
     if (isBusy) {
       Swal.fire({
-        icon: 'warning',
-        title: 'Loket Sibuk',
+        icon: 'warning', title: 'Loket Sibuk',
         text: 'Wajib selesaikan antrian saat ini (Klik Selesai/Batal) sebelum memanggil antrian berikutnya!',
         confirmButtonColor: '#3085d6',
       });
       return;
     }
 
-    // 🚀 Turn on custom spinner for queue buttons
+    // ⚡ Optimistic update — UI instan dulu
+    setQueues(prev => prev.map(q => q.id === id ? { ...q, status: 'called', loket } : q));
     setCallsLoading(prev => ({ ...prev, [`${id}-${loket}`]: true }));
-
-    setShowModal(true);
-    Swal.fire({
-      title: "Memanggil...",
-      text: `Memanggil ${name} ke Loket ${loket}`,
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
-      timer: 1500,
-      timerProgressBar: true,
-      showConfirmButton: false,
-    });
 
     try {
       const res = await fetch(`${BASE_URL}/queues/${id}/call`, {
@@ -278,8 +277,8 @@ export default function QueuePage() {
       // (Logic ini sekarang dipindahkan ke dalam finally untuk fallback, dan dipanggil langsung jika OK)
 
       if (!res.ok) {
-        setShowModal(false);
-        Swal.close();
+        // Rollback optimistic update jika API gagal
+        setQueues(prev => prev.map(q => q.id === id ? { ...q, status: 'waiting', loket: null } : q));
         if (res.status === 419) {
           Swal.fire("CSRF Error", "Sesi berakhir atau CSRF tidak valid (419)", "error");
         } else {
@@ -289,12 +288,7 @@ export default function QueuePage() {
         return;
       }
 
-      console.log("✅ API Berhasil!");
-      setShowModal(false);
-      Swal.close();
-
-      // 🔄 Force refresh queue list di background (tanpa await agar UI instan merespon)
-      fetchQueues();
+      fetchQueues(); // Sinkron di background
     } catch (err) {
       console.error("callQueue error:", err);
       Swal.fire({
@@ -303,9 +297,6 @@ export default function QueuePage() {
         text: "Gagal memanggil antrian. Periksa koneksi backend.",
       });
     } finally {
-      // Ultimate fallback: tutup modal jika masih terbuka
-      setShowModal(false);
-      Swal.close();
       setCallsLoading(prev => ({ ...prev, [`${id}-${loket}`]: false }));
     }
   };
@@ -365,10 +356,10 @@ export default function QueuePage() {
           {(() => {
             const lokets = isLoketMode
               ? [Number(userRole.match(/(\d+)$/)?.[1])]
-              : [1, 2, 3, 4];
+              : Array.from({ length: loketCount }, (_, i) => i + 1);
 
             return (
-              <div className={`grid gap-4 ${isLoketMode ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"}`}>
+              <div className={`grid gap-4 ${isLoketMode ? "grid-cols-1" : loketCount <= 2 ? "grid-cols-1 sm:grid-cols-2" : loketCount <= 4 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : loketCount <= 6 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"}`}>
                 {lokets.map((loketNum) => {
                   const serving = queues
                     .filter((q) => q.status === "called" && Number(q.loket) === loketNum)
@@ -460,6 +451,7 @@ export default function QueuePage() {
             mode={mode}
             userRole={userRole}
             callsLoading={callsLoading}
+            loketCount={loketCount}
           />
         </div>
 

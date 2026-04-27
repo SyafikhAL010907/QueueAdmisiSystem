@@ -15,6 +15,7 @@ export default function QueueTable({
   mode = "admin-dev",
   userRole = "",
   callsLoading = {},
+  loketCount = 4,
 }) {
   // Extract loket number from role string (e.g. "Admin Loket 2" → 2)
   const extractLoket = (role) => {
@@ -29,7 +30,7 @@ export default function QueueTable({
     .filter((q) => q.status === "called")
     .map((q) => Number(q.loket_id || q.loket));
 
-  const calledQueues = queues.filter((q) => q.status === "called").slice(0, 4);
+  const calledQueues = queues.filter((q) => q.status === "called").slice(0, loketCount);
   const waitingQueues = queues.filter((q) => q.status === "waiting");
 
   const handleCall = async (q, loket) => {
@@ -132,7 +133,7 @@ export default function QueueTable({
                 </td>
                 <td className="px-6 py-5">
                   <div className="flex flex-wrap justify-center gap-2">
-                    {[1, 2, 3, 4].map((loket) => {
+                    {Array.from({ length: loketCount }, (_, i) => i + 1).map((loket) => {
                       const isBusy = busyLokets.includes(loket);
                       const isLoading = callsLoading[`${q.id}-${loket}`];
                       return (

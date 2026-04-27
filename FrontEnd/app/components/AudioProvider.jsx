@@ -39,6 +39,10 @@ export function AudioProvider({ children }) {
     const [isSpeaking, setIsSpeaking] = useState(false);
 
     const langRef = useRef("id");
+    // De-dupe guard: ref level komponen agar persist antar React Strict Mode re-run
+    const lastHandledRef = useRef({ ts: 0, qNum: null });
+    // Guard: hanya boleh ada 1 Echo instance
+    const echoRef = useRef(null);
 
     const handleUnlockClick = useCallback(() => {
         if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -78,7 +82,7 @@ export function AudioProvider({ children }) {
         const item = callQueue[0];
         const qNum = item.queue_number ?? item.queueNumber ?? null;
         const cName = item.name ?? item.customer_name ?? "";
-        const lNum = item.loket ?? item.loket_number ?? 1;
+        const lNum = parseInt(item.loket ?? item.loket_number ?? 1, 10) || 1; // paksa integer bersih
         const eLang = item.lang ?? "id";
 
         if (!qNum) {
@@ -108,6 +112,8 @@ export function AudioProvider({ children }) {
     useEffect(() => {
         if (!hasMounted) return;
         if (typeof window === "undefined") return;
+        // Guard: jika sudah ada koneksi aktif, jangan buat lagi
+        if (echoRef.current) return;
 
         window.Pusher = Pusher;
         const echo = new Echo({
@@ -115,38 +121,36 @@ export function AudioProvider({ children }) {
             key: 'azrdrsjgfa1g49yuqvml',
             ...getReverbConfig(),
             authEndpoint: `${getBaseUrl()}/api/broadcasting/auth`,
-            auth: {
-                headers: {
-                    Accept: 'application/json'
-                }
-            }
+            auth: { headers: { Accept: 'application/json' } }
         });
+        echoRef.current = echo;
 
         echo.connector.pusher.connection.bind('connected', () => setIsEchoOnline(true));
         echo.connector.pusher.connection.bind('unavailable', () => setIsEchoOnline(false));
         echo.connector.pusher.connection.bind('disconnected', () => setIsEchoOnline(false));
 
-        const channel = echo.channel('queue-channel');
-
-        channel.listen('.queue.called', handleIncomingEvent);
-        channel.listen('queue.called', handleIncomingEvent);
-
-        const pusherChannel = echo.connector.pusher.subscribe('queue-channel');
-        pusherChannel.bind('queue.called', handleIncomingEvent);
-
-        const lastHandledRef = { ts: 0, qNum: null };
-
+        // Definisikan handler SEBELUM listen
         function handleIncomingEvent(e) {
             const now = Date.now();
             const incomingQ = e.queue_number ?? e.queueNumber ?? null;
-            if (incomingQ && incomingQ === lastHandledRef.qNum && (now - lastHandledRef.ts) < 1000) {
+            // De-dupe: abaikan event sama dalam 3 detik (gunakan ref level komponen)
+            if (
+                incomingQ &&
+                incomingQ === lastHandledRef.current.qNum &&
+                (now - lastHandledRef.current.ts) < 3000
+            ) {
+                console.warn('⛔ Duplikat event diabaikan:', incomingQ, `(${now - lastHandledRef.current.ts}ms)`);
                 return;
             }
-            lastHandledRef.ts = now;
-            lastHandledRef.qNum = incomingQ;
-
+            lastHandledRef.current.ts = now;
+            lastHandledRef.current.qNum = incomingQ;
+            console.log('📡 Event diterima:', incomingQ);
             setCallQueue(prev => [...prev, e]);
         }
+
+        // SATU listener
+        const channel = echo.channel('queue-channel');
+        channel.listen('.queue.called', handleIncomingEvent);
 
         const handleStorageChange = (ev) => {
             if (ev.key === "queue_lang") langRef.current = ev.newValue || "id";
@@ -154,8 +158,8 @@ export function AudioProvider({ children }) {
         window.addEventListener("storage", handleStorageChange);
 
         return () => {
+            echoRef.current = null;
             echo.leave('queue-channel');
-            echo.connector.pusher.unsubscribe('queue-channel');
             echo.disconnect();
             window.removeEventListener("storage", handleStorageChange);
         };
