@@ -89,6 +89,7 @@ return [
                 'allowed_origins' => ['*'],
                 'ping_interval' => 60,
                 'activity_timeout' => 30,
+                'max_message_size' => env('REVERB_APP_MAX_MESSAGE_SIZE', 10_000), // INI YANG BENER
             ],
         ],
 
