@@ -37,66 +37,84 @@ class QueueController extends Controller
     // ✅ CALL — accepts integer loket OR role string like "Admin Loket 3"
     public function call(Request $request, $id)
     {
-        $request->validate([
-            'loket' => 'nullable|integer|between:1,9',
-            'role' => 'nullable|string',
-        ]);
+        try {
+            $request->validate([
+                'loket' => 'nullable|integer|between:1,9',
+                'role' => 'nullable|string',
+            ]);
 
-        $loket = $request->loket;
+            $loket = $request->loket;
 
-        // Ekstrak nomor dari role string jika loket tidak dikirim langsung
-        if (!$loket && $request->filled('role')) {
-            preg_match('/(\d+)$/', $request->role, $m);
-            $loket = isset($m[1]) ? (int) $m[1] : null;
+            // Ekstrak nomor dari role string jika loket tidak dikirim langsung
+            if (!$loket && $request->filled('role')) {
+                preg_match('/(\d+)$/', $request->role, $m);
+                $loket = isset($m[1]) ? (int) $m[1] : null;
+            }
+
+            if (!$loket) {
+                return response()->json(['message' => 'Loket tidak dikenali.'], 422);
+            }
+
+            // Check if there's already an active queue for this loket
+            $activeQueue = Queue::where('loket', $loket)
+                ->where('status', 'called')
+                ->exists();
+
+            if ($activeQueue) {
+                return response()->json(['message' => 'Anda masih memiliki antrian aktif!'], 400);
+            }
+
+            $queue = Queue::findOrFail($id);
+            $queue->status = 'called';
+            $queue->loket = $loket;
+            $queue->updated_at = now();
+            $queue->save();
+
+            // Broadcast ke SEMUA tab tanpa terkecuali (termasuk tab Display)
+            $lang = $request->lang ?? 'id';
+            broadcast(new \App\Events\QueueCalled(
+                $queue->queue_number,
+                $queue->name,
+                $loket,
+                $lang
+            ));
+
+            return response()->json($queue);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("CALL ERROR: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Gagal memanggil antrian.',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        if (!$loket) {
-            return response()->json(['message' => 'Loket tidak dikenali.'], 422);
-        }
-
-        // Check if there's already an active queue for this loket
-        $activeQueue = Queue::where('loket', $loket)
-            ->where('status', 'called')
-            ->exists();
-
-        if ($activeQueue) {
-            return response()->json(['message' => 'Anda masih memiliki antrian aktif!'], 400);
-        }
-
-        $queue = Queue::findOrFail($id);
-        $queue->status = 'called';
-        $queue->loket = $loket;
-        $queue->updated_at = now();
-        $queue->save();
-
-        // Broadcast ke SEMUA tab tanpa terkecuali (termasuk tab Display)
-        $lang = $request->lang ?? 'id';
-        broadcast(new \App\Events\QueueCalled(
-            $queue->queue_number,
-            $queue->name,
-            $loket,
-            $lang
-        ));
-
-        return response()->json($queue);
     }
+
 
     // RECALL — rebroadcast existing called queue
     public function recall(Request $request, $id)
     {
-        $queue = Queue::where('status', 'called')->findOrFail($id);
+        try {
+            $queue = Queue::where('status', 'called')->findOrFail($id);
 
-        // Broadcast ke SEMUA tab
-        $lang = $request->lang ?? 'id';
-        broadcast(new \App\Events\QueueCalled(
-            $queue->queue_number,
-            $queue->name,
-            $queue->loket,
-            $lang
-        ));
+            // Broadcast ke SEMUA tab
+            $lang = $request->lang ?? 'id';
+            broadcast(new \App\Events\QueueCalled(
+                $queue->queue_number,
+                $queue->name,
+                $queue->loket,
+                $lang
+            ));
 
-        return response()->json($queue);
+            return response()->json($queue);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("RECALL ERROR: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Gagal memanggil ulang antrian.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
+
 
     // Complete
     public function complete($id)
