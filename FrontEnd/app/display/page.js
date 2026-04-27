@@ -301,9 +301,9 @@ export default function DisplayPage() {
           </section>
 
           {/* ===== RIGHT : VIDEO AREA (8 cols on desktop) ===== */}
-          <section className="w-full lg:col-span-8 flex flex-col mb-8 lg:mb-0 lg:h-full">
+          <section className="w-full lg:col-span-8 flex flex-col mb-8 lg:mb-0 justify-center">
             {/* ── VIDEO AREA ── */}
-            <div className="flex-1 w-full h-full rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl relative bg-black min-h-[300px] transition-all duration-1500 ease-in-out transform-gpu flex items-center justify-center">
+            <div className="w-full aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl relative bg-black transition-all duration-1500 ease-in-out transform-gpu flex items-center justify-center">
               <video
                 ref={videoRef}
                 src="https://res.cloudinary.com/dwhtnuo9d/video/upload/v1777289416/Lv_0_20260420131810_2_1_1_crmkxc.mp4"
@@ -311,7 +311,7 @@ export default function DisplayPage() {
                 loop
                 muted
                 playsInline
-                className="max-w-full max-h-full object-contain"
+                className="w-full h-full object-cover"
               />
               {/* Profile Label Overlay */}
               <div className="absolute bottom-6 right-6 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
