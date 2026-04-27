@@ -98,13 +98,6 @@ Route::middleware('auth')->group(function () {
         return response()->json(['message' => 'Admin berhasil dihapus.']);
     });
 
-    // Loket count — jumlah loket aktif berdasarkan user Admin Loket N
-    Route::get('/loket-count', function () {
-        $count = \App\Models\User::where('role', 'like', 'Admin Loket %')
-            ->count();
-        // Minimum 1 loket agar UI tidak kosong
-        return response()->json(['count' => max(1, $count)]);
-    });
 });
 
 // --- Queue ---
@@ -112,6 +105,14 @@ Route::get('/queues', [QueueController::class, 'index']);
 Route::post('/queues', [QueueController::class, 'store']);
 Route::get('/queues/stats', [QueueController::class, 'stats']);
 Route::get('/queue/current-calling', [QueueController::class, 'currentCalling']);
+
+// Loket count — jumlah loket aktif (Publik untuk Display)
+Route::get('/loket-count', function () {
+    $count = \App\Models\User::where('role', 'like', 'Admin Loket %')
+        ->count();
+    return response()->json(['count' => max(1, $count)]);
+});
+
 Route::post('/queues/{id}/call', [QueueController::class, 'call']);
 Route::post('/queues/{id}/recall', [QueueController::class, 'recall']);
 Route::post('/queues/{id}/complete', [QueueController::class, 'complete']);

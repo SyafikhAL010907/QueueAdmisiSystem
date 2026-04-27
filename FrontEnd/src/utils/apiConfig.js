@@ -4,19 +4,10 @@
  */
 
 export const getBaseUrl = () => {
-    // Priority 1: Environment variable (set in Vercel/Render)
-    if (process.env.NEXT_PUBLIC_API_URL) {
-        return process.env.NEXT_PUBLIC_API_URL;
-    }
-
-    if (typeof window !== 'undefined') {
-        // Automatically detect the current host (Fallback for local dev)
-        const host = window.location.hostname;
-        return `http://${host}:8000`;
-    }
-    // Fallback for SSR
-    return 'http://localhost:8000';
+    // Paksa pakai alamat Render biar pasti bisa konek
+    return "https://queueadmisisystem.onrender.com";
 };
+
 
 export const getApiUrl = () => `${getBaseUrl()}/api`;
 

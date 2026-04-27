@@ -29,10 +29,11 @@ class SqlSeeder extends Seeder
         try {
             DB::unprepared($sql);
             
-            // PAKSA UPDATE PASSWORD ADMIN BIAR PASTI BISA LOGIN
-            DB::table('users')->where('email', 'AdminDev@gmail.com')->update([
+            // PAKSA UPDATE PASSWORD ADMIN BIAR PASTI BISA LOGIN (Huruf gede kecil aman)
+            DB::table('users')->whereRaw('LOWER(email) = ?', [strtolower('AdminDev@gmail.com')])->update([
                 'password' => \Illuminate\Support\Facades\Hash::make('Admindev1')
             ]);
+
 
             $this->command->info("Impor data berhasil & Password admin di-reset!");
         } catch (\Exception $e) {
