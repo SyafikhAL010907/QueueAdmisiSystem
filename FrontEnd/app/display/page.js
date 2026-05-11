@@ -306,7 +306,7 @@ export default function DisplayPage() {
             <div className="w-full aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl relative bg-black transition-all duration-1500 ease-in-out transform-gpu flex items-center justify-center">
               <video
                 ref={videoRef}
-                src="https://res.cloudinary.com/dwhtnuo9d/video/upload/v1777289416/Lv_0_20260420131810_2_1_1_crmkxc.mp4"
+                src="https://res.cloudinary.com/dwhtnuo9d/video/upload/q_auto/f_auto/v1778465980/profile_bfzshp.mp4"
                 autoPlay
                 loop
                 muted
