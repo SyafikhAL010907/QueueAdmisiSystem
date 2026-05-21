@@ -210,7 +210,7 @@ export default function DisplayPage() {
               <div className="h-px bg-white/10" />
               <div className="flex justify-between items-center">
                 <span className="text-slate-400 font-medium">Jam</span>
-                <span className="text-white font-bold">09:00 — 17:00 WIB</span>
+                <span className="text-white font-bold">08:30 — 17:00 WIB</span>
               </div>
               <div className="h-px bg-white/10" />
               <div className="flex justify-between items-center">

@@ -23,14 +23,14 @@ Route::get('/operating-status', function () {
     $now = \Carbon\Carbon::now('Asia/Jakarta');
     return response()->json([
         'is_open' => $isOpen,
-        'working_hours' => 'Senin - Sabtu, 09:00 - 17:00 WIB',
+        'working_hours' => 'Senin - Sabtu, 08:30 - 17:00 WIB',
         'current_time' => $now->toDateTimeString(),
         'current_day' => $now->translatedFormat('l'), // Senin, Selasa, dll
     ]);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DILINDUNGI JAM KERJA (Senin-Sabtu 09:00-17:00 WIB)
+// DILINDUNGI JAM KERJA (Senin-Sabtu 08:30-17:00 WIB)
 // ═══════════════════════════════════════════════════════════════════════════
 
 Route::middleware('working-hours')->group(function () {

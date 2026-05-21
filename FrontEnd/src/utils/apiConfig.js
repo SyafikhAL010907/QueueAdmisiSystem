@@ -23,7 +23,7 @@ export const getReverbConfig = () => {
 };
 
 /**
- * Cek apakah sekarang dalam jam kerja (Senin-Sabtu, 09:00-17:00 WIB)
+ * Cek apakah sekarang dalam jam kerja (Senin-Sabtu, 08:30-17:00 WIB)
  * Digunakan oleh frontend untuk menghentikan polling di luar jam kerja
  */
 export const isWorkingHours = () => {
@@ -33,9 +33,11 @@ export const isWorkingHours = () => {
     const wib = new Date(wibStr);
     const day = wib.getDay(); // 0=Minggu, 6=Sabtu
     const hour = wib.getHours();
+    const minutes = wib.getMinutes();
 
     const isWorkingDay = day >= 1 && day <= 6; // Senin-Sabtu
-    const isWorkingHour = hour >= 9 && hour < 17; // 09:00-16:59
+    const timeValue = hour * 60 + minutes;
+    const isWorkingHour = timeValue >= (8 * 60 + 30) && timeValue < (17 * 60); // 08:30-16:59
 
     return isWorkingDay && isWorkingHour;
 };
@@ -55,7 +57,7 @@ export const fetchOperatingStatus = async () => {
         // Fallback ke client-side check kalau backend unreachable
         return {
             is_open: isWorkingHours(),
-            working_hours: 'Senin - Sabtu, 09:00 - 17:00 WIB',
+            working_hours: 'Senin - Sabtu, 08:30 - 17:00 WIB',
             current_time: new Date().toISOString(),
             fallback: true,
         };

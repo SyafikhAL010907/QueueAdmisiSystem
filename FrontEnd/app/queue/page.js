@@ -359,7 +359,7 @@ export default function QueuePage() {
             <div className="bg-sky-50 rounded-2xl border border-sky-100 p-5 text-left space-y-2">
               <p className="text-xs font-black text-sky-600 uppercase tracking-widest mb-3">Jam Operasional</p>
               <div className="flex justify-between"><span className="text-slate-500">Hari</span><span className="text-sky-900 font-bold">Senin — Sabtu</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Jam</span><span className="text-sky-900 font-bold">09:00 — 17:00 WIB</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Jam</span><span className="text-sky-900 font-bold">08:30 — 17:00 WIB</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Minggu</span><span className="text-rose-500 font-bold">Libur</span></div>
             </div>
           </div>

@@ -209,7 +209,7 @@ export default function MobileQueue() {
                             <div className="bg-sky-50 rounded-2xl border border-sky-100 p-4 text-left space-y-2 text-sm">
                                 <p className="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-2">Jam Operasional</p>
                                 <div className="flex justify-between"><span className="text-slate-500">Hari</span><span className="text-sky-900 font-bold">Senin — Sabtu</span></div>
-                                <div className="flex justify-between"><span className="text-slate-500">Jam</span><span className="text-sky-900 font-bold">09:00 — 17:00 WIB</span></div>
+                                <div className="flex justify-between"><span className="text-slate-500">Jam</span><span className="text-sky-900 font-bold">08:30 — 17:00 WIB</span></div>
                                 <div className="flex justify-between"><span className="text-slate-500">Minggu</span><span className="text-rose-500 font-bold">Libur</span></div>
                             </div>
                         </div>

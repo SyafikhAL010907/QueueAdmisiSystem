@@ -22,7 +22,7 @@ class WorkingHoursMiddleware
 
     /**
      * Handle an incoming request.
-     * Blokir semua request di luar jam kerja: Senin-Sabtu, 09:00-17:00 WIB
+     * Blokir semua request di luar jam kerja: Senin-Sabtu, 08:30-17:00 WIB
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -37,7 +37,7 @@ class WorkingHoursMiddleware
             $now = Carbon::now('Asia/Jakarta');
             return response()->json([
                 'message' => 'Sistem antrian sedang offline. Di luar jam operasional.',
-                'working_hours' => 'Senin - Sabtu, 09:00 - 17:00 WIB',
+                'working_hours' => 'Senin - Sabtu, 08:30 - 17:00 WIB',
                 'current_time' => $now->toDateTimeString(),
                 'is_open' => false,
             ], 503);
@@ -53,11 +53,11 @@ class WorkingHoursMiddleware
     {
         $now = Carbon::now('Asia/Jakarta');
         $dayOfWeek = $now->dayOfWeekIso; // 1=Senin ... 7=Minggu
-        $hour = $now->hour;
+        $currentTime = $now->format('H:i');
 
-        // Senin(1) - Sabtu(6), jam 09:00 - 16:59 WIB
+        // Senin(1) - Sabtu(6), jam 08:30 - 16:59 WIB
         $isWorkingDay = $dayOfWeek >= 1 && $dayOfWeek <= 6;
-        $isWorkingHour = $hour >= 9 && $hour < 17;
+        $isWorkingHour = $currentTime >= '08:30' && $currentTime < '17:00';
 
         return $isWorkingDay && $isWorkingHour;
     }
