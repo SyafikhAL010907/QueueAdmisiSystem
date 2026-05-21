@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
         ]);
         $middleware->redirectGuestsTo(fn() => request()->expectsJson() ? null : route('login'));
+        $middleware->alias([
+            'working-hours' => \App\Http\Middleware\WorkingHoursMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->shouldRenderJsonWhen(fn() => true);

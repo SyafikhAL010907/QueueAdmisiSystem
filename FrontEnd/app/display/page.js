@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAudioContext } from "../components/AudioProvider";
-import { getApiUrl } from "@/src/utils/apiConfig";
+import { getApiUrl, isWorkingHours, fetchOperatingStatus } from "@/src/utils/apiConfig";
 
 const API_URL = getApiUrl();
 
@@ -88,9 +88,24 @@ export default function DisplayPage() {
   const [loketCount, setLoketCount] = useState(4);
 
   const [isError, setIsError] = useState(false);
+  const [isOffline, setIsOffline] = useState(false); // Di luar jam operasional
+  const [operatingInfo, setOperatingInfo] = useState(null);
 
-  // Fetch jumlah loket aktif (dinamis)
+  // ══════════ CEK JAM OPERASIONAL (tiap 60 detik) ═══════════════════════
   useEffect(() => {
+    const checkStatus = async () => {
+      const status = await fetchOperatingStatus();
+      setIsOffline(!status.is_open);
+      setOperatingInfo(status);
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 60000); // Cek tiap 60 detik
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch jumlah loket aktif (dinamis) — hanya saat jam kerja
+  useEffect(() => {
+    if (isOffline) return;
     fetch(`${API_URL}/loket-count`, {
       headers: { Accept: "application/json" },
       credentials: "include",
@@ -98,10 +113,13 @@ export default function DisplayPage() {
       .then((r) => r.json())
       .then((data) => { if (data?.count) setLoketCount(data.count); })
       .catch(() => setLoketCount(4));
-  }, []);
+  }, [isOffline]);
 
-  /* ══════════ POLL: full queue list (5 s) ════════════════════════════════ */
+  /* ══════════ POLL: full queue list (15s saat jam kerja, STOP saat offline) ═ */
   useEffect(() => {
+    // 🛡️ JANGAN poll kalau di luar jam kerja — hemat quota DB
+    if (isOffline) return;
+
     async function fetchQueues() {
       try {
         const res = await fetch(`${API_URL}/queues`, {
@@ -117,16 +135,17 @@ export default function DisplayPage() {
         setQueues(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("queues fetch error:", err);
-        setErrorStatus("Koneksi Server Terputus (Retrying in 30s...)");
+        setErrorStatus("Koneksi Server Terputus (Retrying in 60s...)");
         setIsError(true);
       }
     }
 
     fetchQueues();
-    const intervalTime = isError ? 30000 : 5000;
+    // 🚀 Hemat quota: 15s normal, 60s saat error
+    const intervalTime = isError ? 60000 : 15000;
     const interval = setInterval(fetchQueues, intervalTime);
     return () => clearInterval(interval);
-  }, [isError]);
+  }, [isError, isOffline]);
 
   /* ══════════ CLOCK ═══════════════════════════════════════════════════════ */
   useEffect(() => {
@@ -146,6 +165,75 @@ export default function DisplayPage() {
   }
 
   /* ══════════ UI ═════════════════════════════════════════════════════════ */
+
+  // 🕐 OFFLINE MODE — Tampilkan layar "Di Luar Jam Operasional"
+  if (hasMounted && isOffline) {
+    return (
+      <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col items-center justify-center relative font-sans overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-sky-500/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center gap-8 px-8 text-center">
+          {/* Logo */}
+          <div className="bg-white/10 backdrop-blur-md p-4 rounded-3xl border border-white/10 shadow-2xl">
+            <img src="/img/unj.png" alt="UNJ" className="h-20 w-auto opacity-80" />
+          </div>
+
+          {/* Moon Icon */}
+          <div className="w-24 h-24 rounded-full bg-slate-700/50 border-2 border-slate-600/50 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </div>
+
+          {/* Title */}
+          <div>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-3">
+              Sistem Sedang <span className="text-sky-400">Offline</span>
+            </h1>
+            <p className="text-slate-400 text-base md:text-lg font-medium max-w-md">
+              Di luar jam operasional. Sistem antrian akan aktif kembali pada jam kerja.
+            </p>
+          </div>
+
+          {/* Schedule Info */}
+          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 w-full max-w-sm">
+            <p className="text-xs font-black text-sky-400 uppercase tracking-widest mb-4">Jam Operasional</p>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-medium">Hari</span>
+                <span className="text-white font-bold">Senin — Sabtu</span>
+              </div>
+              <div className="h-px bg-white/10" />
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-medium">Jam</span>
+                <span className="text-white font-bold">09:00 — 17:00 WIB</span>
+              </div>
+              <div className="h-px bg-white/10" />
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 font-medium">Minggu</span>
+                <span className="text-rose-400 font-bold">Libur</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Current Time */}
+          <p className="text-slate-500 text-sm font-medium">
+            Waktu saat ini: <span className="text-slate-300 font-bold">{time || '--:--:--'}</span> WIB
+          </p>
+        </div>
+
+        {/* Footer */}
+        <footer className="absolute bottom-6 text-center">
+          <p className="text-slate-600 text-xs font-bold uppercase tracking-widest">Admisi UNJ • Lounge Eksekutif</p>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-sky-50 via-white to-blue-50 text-slate-800 flex flex-col overflow-hidden relative font-sans">
 

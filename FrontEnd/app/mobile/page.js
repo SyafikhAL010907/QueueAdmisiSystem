@@ -1,6 +1,6 @@
 "use client"; // 🚀 Penting agar tidak Hydration Error
 import { useState, useEffect, useRef } from "react";
-import { getApiUrl } from "@/src/utils/apiConfig";
+import { getApiUrl, isWorkingHours, fetchOperatingStatus } from "@/src/utils/apiConfig";
 
 const API_URL = getApiUrl();
 const STORAGE_KEY = "mobile_queue_data";
@@ -12,6 +12,8 @@ export default function MobileQueue() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasMounted, setHasMounted] = useState(false);
     const [isDesktop, setIsDesktop] = useState(false);
+    const [isOffline, setIsOffline] = useState(false);
+    const [operatingInfo, setOperatingInfo] = useState(null);
 
     // Status ref to track changes and prevent re-triggering haptic/voice
     const lastStatusRef = useRef(null);
@@ -44,6 +46,18 @@ export default function MobileQueue() {
                 localStorage.removeItem(STORAGE_KEY);
             }
         }
+    }, []);
+
+    // Cek jam operasional (tiap 60 detik)
+    useEffect(() => {
+        const checkStatus = async () => {
+            const status = await fetchOperatingStatus();
+            setIsOffline(!status.is_open);
+            setOperatingInfo(status);
+        };
+        checkStatus();
+        const interval = setInterval(checkStatus, 60000);
+        return () => clearInterval(interval);
     }, []);
 
     /* ══════════ ACTIONS ══════════════════════════════════════════════════ */
@@ -121,9 +135,9 @@ export default function MobileQueue() {
             }
         };
 
-        const interval = setInterval(pollStatus, 3000);
+        const interval = setInterval(pollStatus, 10000); // 10 detik (hemat quota)
         return () => clearInterval(interval);
-    }, [queueData?.id, queueData?.status, isDesktop]);
+    }, [queueData?.id, queueData?.status, isDesktop, isOffline]);
 
     /* ══════════ TRIGGERS (VOICE & HAPTIC) ════════════════════════════════ */
 
@@ -178,7 +192,33 @@ export default function MobileQueue() {
                 <p className='text-slate-500 font-medium'>Lounge Eksekutif - Admisi UNJ</p>
             </header>
 
-            {/* INPUT CARD SECTION */}
+            {/* 🕐 OFFLINE BANNER */}
+            {isOffline && (
+                <main className="flex-1 flex items-center justify-center relative z-10 px-4">
+                    <div className="w-full max-w-md bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_20px_50px_rgba(8,112,184,0.12)] p-8 md:p-10 border border-white/50">
+                        <div className="text-center space-y-5">
+                            <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center mx-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black text-sky-900 mb-2">Sistem Sedang Offline</h2>
+                                <p className="text-sm text-slate-500">Di luar jam operasional.</p>
+                            </div>
+                            <div className="bg-sky-50 rounded-2xl border border-sky-100 p-4 text-left space-y-2 text-sm">
+                                <p className="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-2">Jam Operasional</p>
+                                <div className="flex justify-between"><span className="text-slate-500">Hari</span><span className="text-sky-900 font-bold">Senin — Sabtu</span></div>
+                                <div className="flex justify-between"><span className="text-slate-500">Jam</span><span className="text-sky-900 font-bold">09:00 — 17:00 WIB</span></div>
+                                <div className="flex justify-between"><span className="text-slate-500">Minggu</span><span className="text-rose-500 font-bold">Libur</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            )}
+
+            {/* INPUT CARD SECTION — hanya tampil saat jam kerja */}
+            {!isOffline && (
             <main className="flex-1 flex items-center justify-center relative z-10 px-4">
                 <div className="w-full max-w-md bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-[0_20px_50px_rgba(8,112,184,0.12)] p-8 md:p-10 border border-white/50">
                     {!queueData ? (
@@ -277,6 +317,7 @@ export default function MobileQueue() {
                     )}
                 </div>
             </main>
+            )}
 
             {/* FOOTER INFO */}
             <footer className="pb-6 relative z-10">

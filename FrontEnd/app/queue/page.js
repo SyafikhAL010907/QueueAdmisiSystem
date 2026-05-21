@@ -9,7 +9,7 @@ import QueueForm from "../components/QueueForm";
 import QueueTable from "../components/QueueTable";
 import DashboardLayout from "../components/Sidebar";
 import { SUPPORTED_LANGS, getActiveLang } from "../lib/voiceEngine";
-import { getApiUrl } from "@/src/utils/apiConfig";
+import { getApiUrl, isWorkingHours, fetchOperatingStatus } from "@/src/utils/apiConfig";
 
 const BASE_URL = getApiUrl();
 
@@ -30,6 +30,8 @@ export default function QueuePage() {
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   const [isError, setIsError] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [operatingInfo, setOperatingInfo] = useState(null);
 
   // Derive mode from role
   const isLoketMode = userRole.includes("Admin Loket");
@@ -55,8 +57,21 @@ export default function QueuePage() {
     setUserRole(role);
   }, []);
 
-  // Fetch jumlah loket aktif dari API (dinamis)
+  // Cek jam operasional (tiap 60 detik)
   useEffect(() => {
+    const checkStatus = async () => {
+      const status = await fetchOperatingStatus();
+      setIsOffline(!status.is_open);
+      setOperatingInfo(status);
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch jumlah loket aktif dari API (dinamis) — hanya saat jam kerja
+  useEffect(() => {
+    if (isOffline) return;
     fetch(`${BASE_URL}/loket-count`, {
       headers: { 
         Accept: "application/json",
@@ -66,7 +81,7 @@ export default function QueuePage() {
       .then((r) => r.json())
       .then((data) => { if (data?.count) setLoketCount(data.count); })
       .catch(() => setLoketCount(4)); // fallback 4 loket jika API gagal
-  }, []);
+  }, [isOffline]);
 
   /* ══════════ FETCHING ══════════════════════════════════════════════════ */
   const fetchQueues = async () => {
@@ -90,12 +105,13 @@ export default function QueuePage() {
   };
 
   useEffect(() => {
+    if (isOffline) return; // STOP polling di luar jam kerja
     fetchQueues();
-    // 🚀 Anti-Loop: slow down if error
-    const intervalTime = isError ? 30000 : 5000;
+    // 🚀 Hemat quota: 10s normal, 30s saat error
+    const intervalTime = isError ? 30000 : 10000;
     const interval = setInterval(fetchQueues, intervalTime);
     return () => clearInterval(interval);
-  }, [isError]);
+  }, [isError, isOffline]);
 
   /* ══════════ ACTIONS ══════════════════════════════════════════════════ */
   const handleTambah = async (e) => {
@@ -324,6 +340,34 @@ export default function QueuePage() {
   };
 
   /* ══════════ UI ═══════════════════════════════════════════════════════ */
+
+  // 🕐 OFFLINE BANNER
+  if (isOffline) {
+    return (
+      <DashboardLayout>
+        <div className="bg-white/90 backdrop-blur-sm p-6 md:p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-sky-100 min-h-full flex items-center justify-center">
+          <div className="text-center max-w-md space-y-6">
+            <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center mx-auto">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-sky-900 mb-2">Sistem Sedang Offline</h2>
+              <p className="text-slate-500 font-medium">Di luar jam operasional. Silakan kembali pada jam kerja.</p>
+            </div>
+            <div className="bg-sky-50 rounded-2xl border border-sky-100 p-5 text-left space-y-2">
+              <p className="text-xs font-black text-sky-600 uppercase tracking-widest mb-3">Jam Operasional</p>
+              <div className="flex justify-between"><span className="text-slate-500">Hari</span><span className="text-sky-900 font-bold">Senin — Sabtu</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Jam</span><span className="text-sky-900 font-bold">09:00 — 17:00 WIB</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Minggu</span><span className="text-rose-500 font-bold">Libur</span></div>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div
