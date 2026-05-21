@@ -403,7 +403,7 @@ export default function DisplayPage() {
               />
               {/* Profile Label Overlay */}
               <div className="absolute bottom-6 right-6 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-                <p className="text-[10px] font-black text-white/80 uppercase tracking-widest">Admisi UNJ Profile</p>
+                <p className="text-[10px] font-black text-white/80 uppercase tracking-widest">Admisi UNJ</p>
               </div>
             </div>
           </section>
